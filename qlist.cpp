@@ -1,294 +1,157 @@
 #include <iostream>
+#include "jlist.cpp"
 
 template <typename T>
-class Node {
+class JumpList : public BaseList<Node<T>*> {
 public:
-    T data;
-
-    Node* prev;
-    Node* next;
-
-    T getData() {
-        return data;
+    bool hasNextJump(Node<Node<T>*>* jumpNode) {
+        return jumpNode->getNextNode() != this->getTail();
     }
 
-    void setData(T d) {
-        data = d;
+    Node<T>* getPrevDataOfNext(Node<Node<T>*>* jumpNode) {
+        return jumpNode->getNextNode()->getData()->getPrevNode();
     }
 
-    Node<T>* getNextNode() {
-        return next;
-    }
+    void pointerShift(int distance, int index, Node<Node<T>*>* jumpNode) {
+        if (index < distance)
+            jumpNode->setData(jumpNode->getData()->getPrevNode());
 
-    Node<T>* getPrevNode() {
-        return prev;
-    }
-
-    void setNextNode(Node<T>* node) {
-        next = node;
-    }
-
-    void setPrevNode(Node<T>* node) {
-        prev = node;
-    }
-
-    void setPrevOfNext(Node<T>* node) {
-        getNextNode()->setPrevNode(node);
-    }
-
-    void setNextOfPrev(Node<T>* node) {
-        getPrevNode()->setNextNode(node);
-    }
-
-    void unlink() {
-        setNextOfPrev(next);
-        setPrevOfNext(prev);
-        next = nullptr;
-        prev = nullptr;
+        while (this->hasNextJump(jumpNode)) {
+            jumpNode->getNextNode()->data = this->getPrevDataOfNext(jumpNode);
+            jumpNode = jumpNode->getNextNode();
+        }
     }
 };
 
 template <typename T>
-class List {
-private:
-    unsigned int size = 0;
-
-    List<Node<int>*>* quickList = new List<Node<int>*>;
-    Node<T>* head = new Node<T>;
-    Node<T>* tail = new Node<T>;
-
+class List : public BaseList<T> {
 public:
-    int getSize() {
-        return size;
-    }
+    JumpList<T>* jumpList = new JumpList<T>;
+    int distance = 10;
+    int maxJump = 1;
 
-    bool isEmpty() {
-        return getSize() == 0;
-    }
-
-    bool useForwardSearch(int index) {
-        return getSize() - index > getSize() / 2;
-    }
-
-    Node<T>* getHeadBoundary() {
-        return head->prev;
-    }
-
-    Node<T>* getTailBoundary() {
-        return tail->next;
-    }
-
-    Node<T>* getHead() {
-        return head;
-    }
-
-    Node<T>* getTail() {
-        return tail;
-    }
-
-    Node<T>* getFirstNode() {
-        return head->next;
-    }
-
-    Node<T>* getLastNode() {
-        return tail->prev;
-    }
-
-    Node<T>* getSecond() {
-        return getFirstNode()->getNextNode();
-    }
-
-    Node<T>* getPenultimate() {
-        return getLastNode()->getPrevNode();
-    }
-
-    bool isHead(Node<T>* node) {
-        return node == getHead();
-    }
-
-    bool isTail(Node<T>* node) {
-        return node == getTail();
-    }
-
-    bool hasNext(Node<T>* node) {
-        return node->getNextNode() != getTailBoundary();
-    }
-
-    bool hasPrev(Node<T>* node) {
-        return node->getPrevNode() != getHeadBoundary();
-    }
-
-private:
     bool getsQuickPointer() {
-        return getSize() != 0 && getSize() % 50 == 0 ;
+        return BaseList<T>::getSize() != 0 && BaseList<T>::getSize() % distance == 0;
     }
 
     bool losesQuickPointer() {
-        return getSize() % 50 == 49;
+        return BaseList<T>::getSize() % distance == distance - 1;
     }
 
     void addQuickPointer() {
-        
+        jumpList->append(this->getLastNode());
     }
 
     void removeQuickPointer() {
 
     }
 
-    void incSize() {
-        size++;
+    void adjustDistance() {
+        if (this->getSize() >= 400 * maxJump + 50) {
+            Node<Node<T>*>* jumpNode = jumpList->getHead();
+            Node<Node<T>*>* deletableNode;
+
+            if (distance == 10) {
+                while (jumpList->hasNextJump(jumpNode)) {
+                    jumpNode = jumpNode->getNextNode()->getNextNode();
+                    deletableNode = jumpNode->getPrevNode();
+                    deletableNode->unlink();
+                    jumpList->decSize();
+                    delete deletableNode;
+                }
+
+                maxJump += (distance + 10) / 10;
+                distance += 10;
+            } else {
+                Node<T>* node = this->getFirstNode();
+
+                maxJump += (distance + 10) / 10;
+                distance += 10;
+
+                jumpList->clear();
+                int index = 1;
+                while (this->hasNext(node)) {
+                    if (index % distance == 0)
+                        jumpList->append(node);
+
+                    node = node->getNextNode();
+                    index++;
+                }
+            }
+        }
+    }
+
+    void incSize() override {
+        BaseList<T>::size++;
+
+        adjustDistance();
+
         if (getsQuickPointer())
             addQuickPointer();
     }
 
-    void decSize() {
-        size--;
+    void decSize() override {
+        BaseList<T>::size--;
         if (losesQuickPointer())
             removeQuickPointer();
     }
 
-public:
-    List() {
-        head->setNextNode(tail);
-        tail->setPrevNode(head);
-        head->setData({});
-        tail->setData({});
-    }
+    void add(int index, T data) {
+        if (this->isLast(index, data) || this->isFirst(index, data))
+            if (!jumpList->isEmpty()) {
+                jumpList->pointerShift(distance, index, jumpList->getFirstNode());
+                return;
+            }
 
-    ~List(){
-        delete head;
-        delete tail;
-    }
+        bool forward = this->useForwardSearch(index);
 
-    void clear() {
-        while (hasNext(getFirstNode())) {
-            removeFirst();
-        }
-    }
+        if (!jumpList->isEmpty()) {
+            Node<T>* nextNode;
+            Node<Node<T>*>* jumpNode;
 
-    void prepend(T data) {
-        auto* node = new Node<T>;
-        node->setData(data);
+            forward ? jumpNode = jumpList->getFirstNode() : jumpNode = jumpList->getLastNode();
 
-        node->setPrevNode(getHead());
-        node->setNextNode(getFirstNode());
+            if (index >= distance) {
+                if (forward) {
+                    for (int i = 1; jumpList->hasNext(jumpNode); i++, jumpNode = jumpNode->getNextNode())
+                        if (i == index / distance)
+                            break;
+                } else {
+                    for (int i = 0; jumpList->hasPrev(jumpNode); i++, jumpNode = jumpNode->getPrevNode())
+                        if (i == jumpList->getSize() - (index / distance))
+                            break;
+                }
 
-        getHead()->setNextNode(node);
-        node->getNextNode()->setPrevNode(node);
+                nextNode = jumpNode->getData();
+            } else
+                nextNode = this->getHead();
 
-        incSize();
-    }
+            for (int i = 0; i <= index % distance; i++)
+                nextNode = nextNode->getNextNode();
 
-    void append(T data) {
-        auto* node = new Node<T>;
-        node->setData(data);
-
-        node->setPrevNode(getLastNode());
-        node->setNextNode(getTail());
-
-        node->getPrevNode()->setNextNode(node);
-        getTail()->setPrevNode(node);
-
-        incSize();
-    }
-
-    void removeFirst() {
-        if (isEmpty())
-            return;
-
-        Node<T>* node = getFirstNode();
-        getSecond()->setPrevNode(getHead());
-        getHead()->setNextNode(getSecond());
-        decSize();
-        delete node;
-    }
-
-    void remove(int index) {
-        if (isEmpty())
-            return;
-
-        Node<T>* node = getNode(index);
-        node->unlink();
-        decSize();
-        delete node;
-    }
-
-    void removeLast() {
-        if (isEmpty())
-            return;
-
-        Node<T>* node = getLastNode();
-        getPenultimate()->setNextNode(getTail());
-        getTail()->setPrevNode(getPenultimate());
-        decSize();
-        delete node;
-    }
-
-private:
-    Node<T>* getNode(int index) {
-        if (isEmpty())
-            return getHead();
-
-        if (useForwardSearch(index)) {
-            Node<T>* node = getFirstNode();
-            for (int i = 0; hasNext(node) && i < index; i++)
-                node = node->getNextNode();
-
-            return node;
+            this->addMiddle(new Node<T>, nextNode, data);
+            jumpList->pointerShift(distance, index, jumpNode);
         } else {
-            Node<T>* node = getLastNode();
-            for (int i = getSize() - 1; hasPrev(node) && i > index; i--)
-                node = node->getPrevNode();
-
-            return node;
+            forward ?
+            this->addFromFront(index, new Node<T>, this->getFirstNode(), data):
+            this->addFromBack(index, new Node<T>, this->getLastNode(), data);
         }
-    }
-
-public:
-    void setData(int index, T data) {
-        getNode(index)->data = data;
-    }
-
-    T getData(int index) {
-        return getNode(index)->data;
-    }
-
-    void print() {
-        if (isEmpty()) {
-            std::cout << "List @" << this << " empty\n";
-            return;
-        }
-
-        Node<T>* node = getFirstNode();
-        while (hasNext(node)) {
-            std::cout << node->getData() << "\n";
-            node = node->getNextNode();
-        }
-        std::cout << "\n";
-    }
-
-    void printReverse() {
-        if (isEmpty()) {
-            std::cout << "List @" << this << " empty\n";
-            return;
-        }
-
-        Node<T>* node = getLastNode();
-        while (hasPrev(node)) {
-            std::cout << node->getData() << "\n";
-            node = node->getPrevNode();
-        }
-        std::cout << "\n";
     }
 };
 
 int main() {
-    std::cout << "Started\n";
+    std::cout << "Filling list with 10.000.000 objects\n";
     List<int> list;
     for (int i = 1; i <= 10000000; i++)
         list.append(i);
 
-    std::cout << "Appended\n";
-    list.clear();
-    std::cout << "Cleared\n";
+    std::cout << "Initialized\n" <<
+    "Adding 1000 nodes in middle of list...\n";
+
+    for (int index = 4958700; index < 4959700; index++)
+        list.add(index, 99999999);
+
+    std::cout << "Done";
+
+    //list.print();
 }
