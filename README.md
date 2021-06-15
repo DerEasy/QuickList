@@ -40,11 +40,18 @@ The distance between JumpPointers increases everytime the QuickList hits its cur
 
 Rebuilding the JumpList therefore takes place with every multiple of 10 on the x-axis in the function 2x²+20x with x being the JumpPointer distance and y being the amount of nodes in the QuickList. Exactly the opposite thing happens when the size of the QuickList subceeds the lower critical size; the distance between the JumpPointers is decreased by 10. To avoid unnecessarily rebuilding the JumpList when you are adding and removing nodes constantly right at the critical size, the lower critical size is shifted by -50, therefore taking the function 2x²-20x-50, which gives you a buffer of 50 nodes to keep up the overall performance.
 
+![alt text](https://github.com/DerEasy/QuickList/blob/main/images/QuickList%20critical%20size%20graph.png)
 
-
-
-
-
+Here you can see the critical sizes at which the JumpList will be rebuilt to the next/previous JumpList distance. This table also shows some examples for the first few JumpList distances.
+|JumpPointer Distance|Lower critical size|Upper critical size|
+|--------------------|-------------------|-------------------|
+|10                  |None               |400                |
+|20                  |350                |1200               |
+|30                  |1150               |2400               |
+|40                  |2350               |4000               |
+|50      |3950               |6000               |
+|60      |5950               |8400               |
+|70      |8350               |11200              |
 
 
 
