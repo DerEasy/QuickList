@@ -1,5 +1,5 @@
 # QuickList [WIP]
-C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed.
+C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed. Benchmarks at the bottom.
 
 ### Advantages:
 - Can hold huge amounts of nodes (even millions) and retain remarkable efficiency when searching, inserting or deleting by index (explained below)
@@ -31,7 +31,9 @@ Thus, when searching, inserting or deleting a node by index, the JumpList is use
 - Iterating the JumpList from tail to its 24th node
 - Jumping to the 240th node in the QuickList using the JumpPointer
 - Iterating the QuickList two times to the right to arrive at the 242nd node
-- Returning that node by merely taking 18 total steps to iterate to its position
+- Returning that node by merely taking 18 total steps to iterate to its position instead of 158
+
+This speedup gets more dramatic the bigger the QuickList.
 
 ### Rebuilding the JumpList and critical size
 The distance between JumpPointers increases everytime the QuickList hits its current upper critical size, that is the size at which point using larger spaced JumpPointers becomes more efficient. This is called 'rebuilding the JumpList'; the distance is always a multiple of 10.
