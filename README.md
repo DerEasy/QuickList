@@ -38,8 +38,7 @@ Example:
 ### Rebuilding the JumpList and critical size
 The distance between JumpPointers increases everytime the QuickList hits its current upper critical size, that is the size at which point using larger spaced JumpPointers becomes more efficient. This is called 'rebuilding the JumpList'; the distance is always a multiple of 10.
 
-Rebuilding the JumpList therefore takes place with every multiple of 10 on the x-axis in the function 2x²-20x with x being the JumpPointer distance and y being the amount of nodes in the QuickList. Exactly the opposite thing happens when the size of the QuickList subceeds the lower critical size; the distance between the JumpPointers is decreased by 10. To avoid unnecessarily rebuilding the JumpList when you are adding and removing nodes constantly right at the critical size, the lower critical size is shifted by -50, therefore taking the function 2x²-20x-50, which gives you a buffer of 50 nodes to keep up the overall performance.
-
+Rebuilding the JumpList therefore takes place with every multiple of 10 on the x-axis in the function 2x²+20x with x being the JumpPointer distance and y being the amount of nodes in the QuickList. Exactly the opposite thing happens when the size of the QuickList subceeds the lower critical size; the distance between the JumpPointers is decreased by 10. To avoid unnecessarily rebuilding the JumpList when you are adding and removing nodes constantly right at the critical size, the lower critical size is shifted by -50, therefore taking the function 2x²-20x-50, which gives you a buffer of 50 nodes to keep up the overall performance.
 
 
 
