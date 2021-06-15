@@ -2,16 +2,20 @@
 C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed.
 
 ### Advantages:
-- Can hold huge amounts of nodes (even millions) and retain remarkable efficiency when searching, inserting or deleting by index
+- Can hold huge amounts of nodes (even millions) and retain remarkable efficiency when searching, inserting or deleting by index (explained below)
 - Also suitable for small lists, albeit requiring more memory percentually
-- Extra memory usage in percent decreases with the amount of objects in the list
-- Works exactly the same as a normal List on the surface, although its inner workings make for much better performance
-- Generally a good replacement for normal Lists when not coding for embedded systems etc
+- Extra memory usage in percent decreases with the amount of nodes in the list
+- Works exactly the same as a normal List on the surface/for the programmer, although its inner workings make for much better performance, thus it includes all uses and advantages of Lists, but with severely weakened disadvantages
+- Generally a good replacement for normal Lists when not coding for embedded systems/a little extra memory is not a problem etc
 
 ### Disadvantages:
-- Slightly higher memory usage
+- Slightly higher memory usage (explained below)
 - Degrades to a normal list when size is < 10
 - Keeping the efficiency high requires rebuilding the JumpList when the QuickList exceeds/subceeds its current critical size, which is a costly one-time operation, but pays off by its results
+- Technically still O(n) time complexity, although much, much less dramatic
+
+#### Hint:
+Due to the nature of data structures in general, operations by value cannot be sped up, as you would always need to iterate every node and check its value. This cannot be mitigated, so the QuickList has identical performance compared to a normal List regarding these operations.
 
 ## How it works
 ### JumpList
