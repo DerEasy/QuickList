@@ -23,4 +23,14 @@ C++ implementation of a Doubly Linked List, but with drastically improved search
 ### JumpList
 The JumpList is a seperate list that is created as a member of a QuickList.
 It holds pointers that point to evenly spaced nodes in the QuickList.
+
 Initially the distance between these JumpPointers is 10. That means that every tenth object in the QuickList has a JumpPointer that is pointing to it excluding the first object.
+Thus, when searching, inserting or deleting an object by index, the JumpList is used to jump to a position in the list that is smaller or equal to the index that is requested, iterating the QuickList from that node on.
+
+Example:
+- Scenario: Searching for the 242nd node in a QuickList with 400 nodes
+- JumpList has 400 / distance(10) = 40 JumpPointers in it
+- Iterating the JumpList from tail to its 24th node
+- Jumping to the 240th node in the QuickList using the JumpPointer
+- Iterating the QuickList two times to the right to arrive at the 242nd node
+- Returning that node by merely taking 18 total steps to iterate to its position
