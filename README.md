@@ -1,7 +1,7 @@
 # QuickList
 C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed.
 
-Advantages:
+### Advantages:
 - Can hold huge amounts of objects (even millions) and retain efficiency when searching, inserting or deleting by index
 - Also suitable for small lists, albeit requiring more memory percentually
 - Extra memory usage in percent decreases with the amount of objects in the list: 
@@ -14,7 +14,13 @@ Advantages:
   
   0.04464% at 10 million objects
 
-Disadvantages:
+### Disadvantages:
 - Slightly higher memory usage
 - Degrades to a normal list when size is < 10
 - Keeping the efficiency high requires rebuilding the JumpList when the QuickList exceeds/subceeds its current critical size, which is a costly one-time operation, but pays off by its results
+
+## How it works
+### JumpList
+The JumpList is a seperate list that is created as a member of a QuickList.
+It holds pointers that point to evenly spaced nodes in the QuickList.
+Initially the distance between these JumpPointers is 10. That means that every tenth object in the QuickList has a JumpPointer that is pointing to it excluding the first object.
