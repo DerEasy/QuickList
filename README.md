@@ -5,7 +5,8 @@ C++ implementation of a Doubly Linked List, but with drastically improved search
 - Can hold huge amounts of nodes (even millions) and retain remarkable efficiency when searching, inserting or deleting by index
 - Also suitable for small lists, albeit requiring more memory percentually
 - Extra memory usage in percent decreases with the amount of objects in the list
-- Generally a good replacement for normal Lists when not coding for embedded systems etc.
+- Works exactly the same as a normal List on the surface, although its inner workings make for much better performance
+- Generally a good replacement for normal Lists when not coding for embedded systems etc
 
 ### Disadvantages:
 - Slightly higher memory usage
@@ -20,7 +21,7 @@ It holds pointers that point to evenly spaced nodes in the QuickList.
 Initially the distance between these JumpPointers is 10. That means that every tenth node in the QuickList has a JumpPointer that is pointing to it excluding the first node.
 Thus, when searching, inserting or deleting a node by index, the JumpList is used to jump to a position in the list that is smaller or equal to the index that is requested, iterating the QuickList from that node on.
 
-Example:
+#### Example:
 - Scenario: Searching for the 242nd node in a QuickList with 400 nodes
 - JumpList has 400 / distance(10) = 40 JumpPointers in it
 - Iterating the JumpList from tail to its 24th node
@@ -32,6 +33,8 @@ Example:
 The distance between JumpPointers increases everytime the QuickList hits its current upper critical size, that is the size at which point using larger spaced JumpPointers becomes more efficient. This is called 'rebuilding the JumpList'; the distance is always a multiple of 10.
 
 Rebuilding the JumpList therefore takes place with every multiple of 10 on the x-axis in the function 2x²+20x with x being the JumpPointer distance and y being the amount of nodes in the QuickList. Exactly the opposite thing happens when the size of the QuickList subceeds the lower critical size; the distance between the JumpPointers is decreased by 10. To avoid unnecessarily rebuilding the JumpList when you are adding and removing nodes constantly right at the critical size, the lower critical size is shifted by -50, therefore taking the function 2x²-20x-50, which gives you a buffer of 50 nodes to keep up the overall performance.
+
+Rebuilding the JumpList is a fully automatic and dynamic process, that shall not be interfered with, thus there is no functionality to alter the QuickList's/JumpList's logic.
 
 ![alt text](https://github.com/DerEasy/QuickList/blob/main/images/QuickList%20critical%20size%20graph.png)
 
