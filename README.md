@@ -49,9 +49,9 @@ Here you can see the critical sizes at which the JumpList will be rebuilt to the
 |20                  |350                |1200               |
 |30                  |1150               |2400               |
 |40                  |2350               |4000               |
-|50      |3950               |6000               |
-|60      |5950               |8400               |
-|70      |8350               |11200              |
+|50                  |3950               |6000               |
+|60                  |5950               |8400               |
+|70                  |8350               |11200              |
 
 
 
