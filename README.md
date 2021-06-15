@@ -42,7 +42,7 @@ Rebuilding the JumpList therefore takes place with every multiple of 10 on the x
 
 ![alt text](https://github.com/DerEasy/QuickList/blob/main/images/QuickList%20critical%20size%20graph.png)
 
-Here you can see the critical sizes at which the JumpList will be rebuilt to the next/previous JumpList distance. This table also shows some examples for the first few JumpList distances.
+Here you can see the critical sizes at which the JumpList will be rebuilt to the next/previous JumpPointer distance. This table also shows some examples for the first few JumpPointer distances. Rebuilding from 10 to 20 is the only distance increase that is much faster than all others, as it suffices to just delete every second node, instead of clearing the JumpList, iterating the entire QuickList and setting the JumpPointers accordingly.
 |JumpPointer Distance|Lower critical size|Upper critical size|
 |--------------------|-------------------|-------------------|
 |10                  |None               |400                |
@@ -53,9 +53,17 @@ Here you can see the critical sizes at which the JumpList will be rebuilt to the
 |60                  |5950               |8400               |
 |70                  |8350               |11200              |
 
-
-
-
+Due to the initial and lowest JumpPointer distance being 10, the QuickList is no different from a normal doubly linked list until a 10th node has been appended to it.
+The extra memory usage of the JumpList in percent is calculated with 1/10x with x being the JumpPointer distance thus:
+|JumpPointer Distance|Extra memory usage|Maximum size of QuickList|Maximum amount of JumpPointers|
+|--------------------|------------------|-------------------------|------------------------------|
+|10                  |10%               |399                      |39                            |
+|20                  |5%                |1199                     |59                            |
+|30                  |3.33%             |2399                     |79                            |
+|40                  |2.5%              |3999                     |99                            |
+|50                  |2%                |5999                     |119                           |
+|60                  |1.66%             |8399                     |139                           |
+|70                  |1.42%             |11199                    |159                           |
 
 
 
