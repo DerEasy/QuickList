@@ -17,4 +17,4 @@ Advantages:
 Disadvantages:
 - Slightly higher memory usage
 - Degrades to a normal list when size is < 10
-- Keeping the efficiency high requires rebuilding the JumpList when the List exceeds certain amounts of sizes, which is a costly one-time operation, but pays off by its results
+- Keeping the efficiency high requires rebuilding the JumpList when the QuickList exceeds/subceeds its current critical size, which is a costly one-time operation, but pays off by its results
