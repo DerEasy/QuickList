@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 template <typename T>
 class Node {
@@ -302,5 +303,19 @@ public:
             node = node->getPrevNode();
         }
         std::cout << "\n";
+    }
+
+    void writeToFile() {
+        std::ofstream file;
+        file.open("output.txt");
+
+        Node<T>* node = this->getFirstNode();
+        int index = 0;
+        while (this->hasNext(node)) {
+            file << index << ": " << node->getData() << "\n";
+            node = node->getNextNode();
+            index++;
+        }
+        file.close();
     }
 };
