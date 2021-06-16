@@ -1,5 +1,10 @@
 #include <iostream>
+#include <list>
+#include <cmath>
 #include "baselist.cpp"
+#include "chrono"
+
+using namespace std::chrono;
 
 template <typename T>
 class JumpList : public BaseList<Node<T>*> {
@@ -48,12 +53,10 @@ class QuickList : public BaseList<T> {
 public:
     JumpList<T>* jumpList = new JumpList<T>;
     int distance = 10;
-    int nextJumpShift = 1;
-    int prevJumpShift = 0;
 
     void incSize() override {
         BaseList<T>::size++;
-        adjustJumpList();
+        rebuildJumpList();
 
         if (getsJumpPointer())
             addJumpPointer();
@@ -61,7 +64,7 @@ public:
 
     void decSize() override {
         BaseList<T>::size--;
-        adjustJumpList();
+        rebuildJumpList();
 
         if (losesJumpPointer())
             removeJumpPointer();
@@ -101,53 +104,57 @@ public:
         return false;
     }
 
-    void adjustJumpList() {
-        if (this->getSize() >= 400 * nextJumpShift + 50) {
-            if (distance == 10) {
-                Node<Node<T>*>* jumpNode = jumpList->getHead();
-                Node<Node<T>*>* deletableNode;
+    int calcDistance() {
+        int x = (int) (-5 + sqrt(pow(5, 2) + ((double) this->getSize() / 2)));
+        x -= x % 10;
+        return x + 10;
+    }
 
-                while (jumpList->hasNextJump(jumpNode)) {
-                    jumpNode = jumpNode->getNextNode()->getNextNode();
-                    deletableNode = jumpNode->getPrevNode();
-                    deletableNode->unlink();
-                    jumpList->decSize();
-                    delete deletableNode;
-                }
+    int upperCritical() {
+        return 2 * pow(distance, 2) + 20 * distance;
+    }
 
-                prevJumpShift = nextJumpShift;
-                nextJumpShift += (distance + 10) / 10;
-                distance += 10;
-            } else {
-                Node<T>* node = this->getFirstNode();
+    int lowerCritical() {
+        return 2 * pow(distance, 2) - 20 * distance - 50;
+    }
 
-                prevJumpShift = nextJumpShift;
-                nextJumpShift += (distance + 10) / 10;
-                distance += 10;
+    void buildJumpList() {
+        jumpList->clear();
+        distance = calcDistance();
+        Node<T>* node = this->getFirstNode();
 
-                jumpList->clear();
-                int index = 1;
-                while (this->hasNext(node)) {
-                    if (index % distance == 0)
-                        jumpList->append(node);
+        int index = 1;
+        while (this->hasNext(node)) {
+            if (index % distance == 0)
+                jumpList->append(node);
 
-                    node = node->getNextNode();
-                    index++;
-                }
-            }
-        } else if (this->getSize() < 400 * prevJumpShift) {
+            node = node->getNextNode();
+            index++;
+        }
+    }
+
+    void rebuildJumpList() {
+        if (this->getSize() >= upperCritical()) {
+            jumpList->clear();
+            distance = calcDistance();
             Node<T>* node = this->getFirstNode();
 
-            nextJumpShift = prevJumpShift;
-            prevJumpShift -= (distance - 10) / 10;
-            distance -= 10;
-
-            jumpList->clear();
             int index = 1;
             while (this->hasNext(node)) {
                 if (index % distance == 0)
                     jumpList->append(node);
+                node = node->getNextNode();
+                index++;
+            }
+        } else if (this->getSize() <= lowerCritical()) {
+            jumpList->clear();
+            distance = calcDistance();
+            Node<T>* node = this->getFirstNode();
 
+            int index = 1;
+            while (this->hasNext(node)) {
+                if (index % distance == 0)
+                    jumpList->append(node);
                 node = node->getNextNode();
                 index++;
             }
@@ -230,10 +237,23 @@ public:
 
         searchResult r = search(index);
 
-        r.node->unlink();
-        decSize();
-        delete r.node;
         jumpList->rightPointerShift(distance, index, r.jumpNode);
+        r.node->unlink();
+        delete r.node;
+        decSize();
+    }
+
+    void removeRange(int indexStart, int indexEnd) {
+        searchResult r = search(indexStart);
+        Node<T>* node;
+        for (int i = 0; i <= indexEnd - indexStart; i++) {
+            node = r.node->getNextNode();
+            r.node->unlink();
+            delete r.node;
+            r.node = node;
+        }
+        BaseList<T>::size -= indexEnd - indexStart;
+        buildJumpList();
     }
 
     void set(int index, T data) override {
@@ -248,12 +268,40 @@ public:
 };
 
 int main() {
-    QuickList<int> list;
-    for (int i = 1; i <= 2000; i++)
-        list.append(i);
+    QuickList<int> quickList;
+    /*
+    for (int i = 1; i <= 399; i++)
+        quickList.append(i);
 
-    list.remove(499);
-    list.print();
-    list.remove(530);
-    list.print();
+    for (int i = 1; i <= 800; i++)
+        quickList.append(i);
+
+    for (int i = 1; i <= 1200; i++)
+        quickList.append(i);
+
+    for (int i = 1; i <= 1601; i++)
+        quickList.append(i);
+
+    for (int i = 1; i <= 1649; i++)
+        quickList.removeLast();
+
+    for (int i = 1; i <= 1200; i++)
+        quickList.removeLast();
+
+    for (int i = 1; i <= 800; i++)
+        quickList.removeLast();
+
+    for (int i = 1; i <= 400; i++)
+        quickList.removeLast();
+        */
+
+    for (int i = 1; i <= 1000000; i++)
+        quickList.append(i);
+    auto t1 = high_resolution_clock::now();
+    for (int i = 1; i <= 1000; i++)
+        quickList.add(500000, 999999999);
+    auto t2 = high_resolution_clock::now();
+
+    auto result = duration_cast<milliseconds>(t2 - t1);
+    std::cout << result.count() << "ms insertion\n";
 }
