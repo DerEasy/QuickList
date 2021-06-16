@@ -7,6 +7,7 @@ C++ implementation of a Doubly Linked List, but with drastically improved search
 - Extra memory usage in percent decreases with the amount of nodes in the list
 - Works exactly the same as a normal List on the surface/for the programmer, although its inner workings make for much better performance, thus it includes all uses and advantages of Lists, but with severely weakened disadvantages
 - Generally a good replacement for normal Lists when not coding for embedded systems/a little extra memory is not a problem etc
+- Easy to use
 
 ### Disadvantages:
 - Slightly higher memory usage (explained below)
