@@ -44,7 +44,7 @@ Rebuilding the JumpList is a fully automatic and dynamic process, that shall not
 
 ![alt text](https://github.com/DerEasy/QuickList/blob/main/images/QuickList%20critical%20size%20graph.png)
 
-Here you can see the critical sizes at which the JumpList will be rebuilt to the next/previous JumpPointer distance. This table also shows some examples for the first few JumpPointer distances. Rebuilding from 10 to 20 is the only distance increase that is much faster than all others, as it suffices to just delete every second node, instead of clearing the JumpList, iterating the entire QuickList and setting the JumpPointers accordingly.
+Here you can see the critical sizes at which the JumpList will be rebuilt to the next/previous JumpPointer distance. This table also shows some examples for the first few JumpPointer distances.
 |JumpPointer Distance|Lower critical size|Upper critical size|
 |--------------------|-------------------|-------------------|
 |10                  |None               |400                |
