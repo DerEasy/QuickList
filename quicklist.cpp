@@ -1,5 +1,4 @@
 #include <iostream>
-#include <list>
 #include <cmath>
 #include "baselist.cpp"
 #include "chrono"
@@ -56,9 +55,9 @@ public:
 
     void incSize() override {
         BaseList<T>::size++;
-        rebuildJumpList();
+        bool rebuilt = rebuildJumpList();
 
-        if (getsJumpPointer())
+        if (getsJumpPointer() && !rebuilt)
             addJumpPointer();
     }
 
@@ -71,11 +70,11 @@ public:
     }
 
     bool getsJumpPointer() {
-        return BaseList<T>::getSize() != 0 && BaseList<T>::getSize() % distance == 0;
+        return this->getSize() != 0 && this->getSize() % distance == 0;
     }
 
     bool losesJumpPointer() {
-        return BaseList<T>::getSize() % distance == distance - 1;
+        return this->getSize() % distance == distance - 1;
     }
 
     void addJumpPointer() {
@@ -86,8 +85,12 @@ public:
         jumpList->removeLast();
     }
 
+    int getMaxIndex() {
+        return this->getSize() - 1;
+    }
+
     bool appendIfLast(int index, T data) {
-        if (index - 1 >= this->getSize() - 1) {
+        if (index - 1 >= getMaxIndex()) {
             this->append(data);
             return true;
         }
@@ -133,7 +136,7 @@ public:
         }
     }
 
-    void rebuildJumpList() {
+    bool rebuildJumpList() {
         if (this->getSize() >= upperCritical()) {
             jumpList->clear();
             distance = calcDistance();
@@ -146,6 +149,7 @@ public:
                 node = node->getNextNode();
                 index++;
             }
+            return true;
         } else if (this->getSize() <= lowerCritical()) {
             jumpList->clear();
             distance = calcDistance();
@@ -158,7 +162,9 @@ public:
                 node = node->getNextNode();
                 index++;
             }
+            return true;
         }
+        return false;
     }
 
     typedef struct searchResult {
@@ -172,7 +178,7 @@ public:
             r.node = this->getFirstNode();
             r.jumpNode = jumpList->getHead();
             return r;
-        } else if (index >= this->getSize() - 1) {
+        } else if (index >= getMaxIndex()) {
             r.node = this->getLastNode();
             r.jumpNode = jumpList->getTail();
             return r;
@@ -225,12 +231,14 @@ public:
     }
 
     void remove(int index) override {
-        if (index <= 0) {
-            this->removeFirst();
+        if (index < 0 || index > getMaxIndex())
+            return;
+        if (index == 0) {
             if (!jumpList->isEmpty())
                 jumpList->rightPointerShift(distance, index, jumpList->getFirstNode());
+            this->removeFirst();
             return;
-        } else if (index >= this->getSize() - 1) {
+        } else if (index == getMaxIndex()) {
             this->removeLast();
             return;
         }
@@ -244,6 +252,26 @@ public:
     }
 
     void removeRange(int indexStart, int indexEnd) {
+        if (indexStart > getMaxIndex())
+            return;
+        if (indexStart < 0)
+            indexStart = 0;
+        if (indexEnd < indexStart) {
+            int temp = indexStart;
+            indexStart = indexEnd;
+            indexEnd = temp;
+        }
+        if (indexStart == indexEnd) {
+            remove(indexStart);
+            return;
+        }
+        if (indexEnd > getMaxIndex()) {
+            indexEnd = getMaxIndex();
+            for (int i = 0; i <= indexEnd - indexStart; i++)
+                this->removeLast();
+            return;
+        }
+
         searchResult r = search(indexStart);
         Node<T>* node;
         for (int i = 0; i <= indexEnd - indexStart; i++) {
@@ -295,13 +323,14 @@ int main() {
         quickList.removeLast();
         */
 
-    for (int i = 1; i <= 1000000; i++)
+    for (int i = 1; i <= 8402; i++)
         quickList.append(i);
     auto t1 = high_resolution_clock::now();
-    for (int i = 1; i <= 1000; i++)
-        quickList.add(500000, 999999999);
+
+    for (int i = 0; i <= 70; i++)
+        quickList.remove(i);
     auto t2 = high_resolution_clock::now();
 
     auto result = duration_cast<milliseconds>(t2 - t1);
-    std::cout << result.count() << "ms insertion\n";
+    std::cout << result.count() << "ms deletion\n";
 }
