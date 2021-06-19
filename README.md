@@ -71,7 +71,7 @@ The extra memory usage of the JumpList in percent is calculated with 1/x with x 
 
 ## Benchmark
 ### Comparison: 10000 single search operations (exact middle)
-|Amount of nodes|List     |QuickList|Time difference|Speedup|
+|Amount of nodes|std::list|QuickList|Time difference|Speedup|
 |---------------|---------|---------|---------------|-------|
 |1,000,000      |17454ms  |98ms     |-99.4%         |+17710%|
 |100,000        |1717ms   |35ms     |-98%           |+4805% |
