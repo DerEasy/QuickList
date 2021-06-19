@@ -57,7 +57,7 @@ public:
         BaseList<T>::size++;
         bool rebuilt = rebuildJumpList();
 
-        if (getsJumpPointer() && !rebuilt)
+        if (!rebuilt && getsJumpPointer())
             addJumpPointer();
     }
 
