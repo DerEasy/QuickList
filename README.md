@@ -58,7 +58,7 @@ Here you can see the critical sizes at which the JumpList will be rebuilt to the
 
 ### Memory usage
 Due to the initial and lowest JumpPointer distance being 10, the QuickList is no different from a normal doubly linked list until a 10th node has been appended to it.
-The extra memory usage of the JumpList in percent is calculated with 1/x with x being the JumpPointer distance thus:
+The extra memory usage because of the JumpList in percent is calculated with 1/x with x being the JumpPointer distance thus:
 |JumpPointer Distance|Extra memory usage|Maximum size of QuickList|Maximum amount of JumpPointers|
 |--------------------|------------------|-------------------------|------------------------------|
 |10                  |10%               |399                      |39                            |
