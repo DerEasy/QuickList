@@ -57,8 +57,30 @@ public:
     Node<T>* head = new Node<T>;
     Node<T>* tail = new Node<T>;
 
+    BaseList() {
+        head->setNextNode(tail);
+        tail->setPrevNode(head);
+        head->setData({});
+        tail->setData({});
+    }
+
+    ~BaseList() {
+        Node<T>* node;
+        while (hasNext(getFirstNode())) {
+            node = getFirstNode();
+            node->unlink();
+            delete node;
+        }
+        delete head;
+        delete tail;
+    }
+
     int getSize() {
         return size;
+    }
+
+    int getMaxIndex() {
+        return getSize() - 1;
     }
 
     bool isEmpty() {
@@ -101,10 +123,6 @@ public:
         return node->getPrevNode() != getHeadBoundary();
     }
 
-    virtual void set(int index, T data) {
-        getNode(index)->data = data;
-    }
-
     void setFirst(T data) {
         getFirstNode()->setData(data);
     }
@@ -113,8 +131,12 @@ public:
         getLastNode()->setData(data);
     }
 
+    virtual void set(int index, T data) {
+        getNode(index)->setData(data);
+    }
+
     virtual T get(int index) {
-        return getNode(index)->data;
+        return getNode(index)->getData();
     }
 
     T getFirst() {
@@ -131,18 +153,6 @@ public:
 
     virtual void decSize() {
         size--;
-    }
-
-    BaseList() {
-        head->setNextNode(tail);
-        tail->setPrevNode(head);
-        head->setData({});
-        tail->setData({});
-    }
-
-    ~BaseList() {
-        delete head;
-        delete tail;
     }
 
     void clear() {
@@ -176,7 +186,7 @@ public:
         incSize();
     }
 
-    void addNode(Node<T>* node, Node<T>* nextNode, T data) {
+    void linkUpNode(Node<T>* node, Node<T>* nextNode, T data) {
         node->setData(data);
         node->setNextNode(nextNode);
         node->setPrevNode(nextNode->getPrevNode());
@@ -200,7 +210,7 @@ public:
 
     Node<T>* searchFromBack(int index) {
         Node<T>* node = getLastNode();
-        int i = getSize() - 1;
+        int i = getMaxIndex();
 
         while (hasPrev(node)) {
             if (i == index)
@@ -212,43 +222,29 @@ public:
     }
 
     void addFromFront(int index, T data) {
-        Node<T>* nextNode = searchFromFront(index);
-        addNode(new Node<T>, nextNode, data);
+        linkUpNode(new Node<T>, searchFromFront(index), data);
     }
 
     void addFromBack(int index, T data) {
-        Node<T>* nextNode = searchFromBack(index);
-        addNode(new Node<T>, nextNode, data);
+        linkUpNode(new Node<T>, searchFromBack(index), data);
     }
 
     void removeFirst() {
         if (isEmpty())
             return;
-
-        Node<T>* node = getFirstNode();
-        node->unlink();
-        decSize();
-        delete node;
+        removeNode(getFirstNode());
     }
 
     virtual void remove(int index) {
         if (isEmpty())
             return;
-
-        Node<T>* node = getNode(index);
-        node->unlink();
-        decSize();
-        delete node;
+        removeNode(getNode(index));
     }
 
     void removeLast() {
         if (isEmpty())
             return;
-
-        Node<T>* node = getLastNode();
-        node->unlink();
-        decSize();
-        delete node;
+        removeNode(getLastNode());
     }
 
     Node<T>* getNode(int index) {
@@ -257,22 +253,26 @@ public:
 
         if (index <= 0)
             return getFirstNode();
-        else if (index >= getSize() - 1)
+        else if (index >= getMaxIndex())
             return getLastNode();
 
+        Node<T>* node;
         if (useForwardSearch(index)) {
-            Node<T>* node = getFirstNode();
+            node = getFirstNode();
             for (int i = 0; hasNext(node) && i < index; i++)
                 node = node->getNextNode();
-
-            return node;
         } else {
-            Node<T>* node = getLastNode();
-            for (int i = getSize() - 1; hasPrev(node) && i > index; i--)
+            node = getLastNode();
+            for (int i = getMaxIndex(); hasPrev(node) && i > index; i--)
                 node = node->getPrevNode();
-
-            return node;
         }
+        return node;
+    }
+
+    void removeNode(Node<T>* node) {
+        node->unlink();
+        delete node;
+        decSize();
     }
 
     void print() {
