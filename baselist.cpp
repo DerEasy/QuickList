@@ -275,6 +275,64 @@ public:
         decSize();
     }
 
+    int indexOf(T data) {
+        Node<T>* node = getFirstNode();
+        int index = 0;
+        while (hasNext(node)) {
+            if (node->getData() == data)
+                return index;
+            node = node->getNextNode();
+            index++;
+        }
+        return -1;
+    }
+
+    int lastIndexOf(T data) {
+        Node<T>* node = getLastNode();
+        int index = getMaxIndex();
+        while (hasPrev(node)) {
+            if (node->getData() == data)
+                return index;
+            node = node->getPrevNode();
+            index--;
+        }
+        return -1;
+    }
+
+    void removeFirstOccurrence(T data) {
+        Node<T>* node = getFirstNode();
+        while (hasNext(node)) {
+            if (node->getData() == data) {
+                removeNode(node);
+                return;
+            }
+            node = node->getNextNode();
+        }
+    }
+
+    void removeLastOccurrence(T data) {
+        Node<T>* node = getLastNode();
+        while (hasPrev(node)) {
+            if (node->getData() == data) {
+                removeNode(node);
+                return;
+            }
+            node = node->getPrevNode();
+        }
+    }
+
+    void removeAllOccurrences(T data) {
+        Node<T>* node = getFirstNode();
+        while (hasNext(node)) {
+            if (node->getData() == data) {
+                node = node->getNextNode();
+                removeNode(node->getPrevNode());
+                continue;
+            }
+            node = node->getNextNode();
+        }
+    }
+
     void print() {
         if (isEmpty()) {
             std::cout << "QuickList @" << this << " empty\n";

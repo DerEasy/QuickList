@@ -87,7 +87,7 @@ public:
      */
     void incSize() override {
         this->size++;
-        bool rebuilt = rebuildJumpList(false);
+        bool rebuilt = rebuildJumpList();
 
         if (!rebuilt && getsJumpPointer())
             addJumpPointer();
@@ -98,7 +98,7 @@ public:
      */
     void decSize() override {
         this->size--;
-        rebuildJumpList(false);
+        rebuildJumpList();
 
         if (losesJumpPointer())
             removeJumpPointer();
@@ -133,6 +133,19 @@ public:
         jumpList->removeLast();
     }
 
+    void concat(QuickList<T>* quickList) {
+        Node<T>* node = quickList->getFirstNode();
+        while (node != quickList->getTail()) {
+            this->append(node->getData());
+            node = node->getNextNode();
+        }
+    }
+
+    void concat(T array[], int arraySize) {
+        for (int i = 0; i < arraySize; i++)
+            this->append(array[i]);
+    }
+
     /**
      * Calculates the distance by using the QuickList size
      * @return distance value as a multiple of 10
@@ -164,8 +177,8 @@ public:
      * @param forceRebuild True to force rebuilding the JumpList
      * @return True if JumpList has been rebuilt
      */
-    bool rebuildJumpList(bool forceRebuild) {
-        if (forceRebuild || this->getSize() >= upperCritical() || this->getSize() <= lowerCritical()) {
+    bool rebuildJumpList() {
+        if (this->getSize() >= upperCritical() || this->getSize() <= lowerCritical()) {
             jumpList->clear();
             distance = calcDistance();
             Node<T>* node = this->getFirstNode();
@@ -368,7 +381,7 @@ public:
             r.node = node;
         }
         this->size -= indexEnd - indexStart;
-        rebuildJumpList(true);
+        rebuildJumpList();
     }
 
     /**
@@ -397,7 +410,6 @@ public:
  * @return
  */
 int main() {
-    QuickList<int> quickList;
     /*
     for (int i = 1; i <= 399; i++)
         quickList.append(i);
@@ -423,13 +435,16 @@ int main() {
     for (int i = 1; i <= 400; i++)
         quickList.removeLast();
         */
+    QuickList<int> quickList1;
+    QuickList<int> quickList2;
 
-    for (int i = 1; i <= 42; i++)
-        quickList.append(i);
+    for (int i = 1; i <= 395; i++)
+        quickList1.append(i);
 
-    quickList.print();
-    quickList.add(7, 555);
-    quickList.add(16, 555);
-    quickList.add(38, 555);
-    quickList.print();
+    for (int i = 100; i <= 120; i++)
+        quickList2.append(i);
+
+    int a[5] = {5,6,7,8,9};
+    quickList1.concat(a, sizeof(a) / sizeof(a[0]));
+    quickList1.print();
 }
