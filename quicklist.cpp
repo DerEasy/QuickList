@@ -33,7 +33,7 @@ public:
      * @param jumpNode The first affected JumpPointer
      */
     void leftPointerShift(int distance, int index, Node<Node<T>*>* jumpNode) {
-        if (jumpNode == this->getHead() || jumpNode == this->getTail())
+        if (jumpNode == nullptr || jumpNode == this->getHead() || jumpNode == this->getTail())
             return;
 
         if (index < distance)
@@ -69,14 +69,24 @@ public:
 template <typename T>
 class QuickList : public BaseList<T> {
 public:
+    typedef struct TrailingPointer {
+        int index;
+        Node<Node<T>*>* jumpNode;
+        Node<T>* node;
+    } TrailingPointer;
+
     //JumpList provides the JumpPointers that point to individual nodes in the QuickList for fast access
     //This is the core functionality of a QuickList
     JumpList<T>* jumpList = new JumpList<T>;
+
+    //TrailingPointer keeps track of the last used node and jumpNode to speed up (semi-)sequential rw operations
+    TrailingPointer trailingPointer = {-1, nullptr, nullptr};
 
     //Distance between individual JumpPointers. Initial: 10
     //Always a multiple of 10, never below 10
     //Example: JumpPointers point to QuickList index 9, 19, 29, 39, 49,...
     int distance = 10;
+
 
     ~QuickList() {
         delete jumpList;
@@ -195,6 +205,24 @@ public:
         return false;
     }
 
+    void setTrailingPointer(int index, Node<T>* node, Node<Node<T>*>* jumpNode) {
+        trailingPointer.index = index;
+        trailingPointer.node = node;
+        trailingPointer.jumpNode = jumpNode;
+    }
+
+    bool trailingPointerViable(int index) {
+        return
+        trailingPointer.index != -1 &&
+        abs(0 - index) > abs(trailingPointer.index - index) &&
+        abs(this->getMaxIndex() - index) > abs(trailingPointer.index - index);
+    }
+
+    int trailingJumpPointerOffset(int index) {
+        int x = trailingPointer.index - trailingPointer.index % distance;
+        return -(x - index) / distance;
+    }
+
     /**
      * Is returned by search(int index). Incorporates the searched node and the jumpNode it has been accessed from.
      */
@@ -203,6 +231,118 @@ public:
         Node<Node<T>*>* jumpNode;
     } searchResult;
 
+    searchResult trailingSearch(int index) {
+        searchResult r;
+        r.jumpNode = trailingPointer.jumpNode;
+        r.node = trailingPointer.node;
+
+        int jumpPointerOffset = trailingJumpPointerOffset(index);
+
+        if (jumpPointerOffset == 0) {
+            int indexOffset = index - trailingPointer.index;
+
+            if (indexOffset > 0)
+                for (int i = 0; i < indexOffset; i++)
+                    r.node = r.node->getNextNode();
+            else if (index - trailingPointer.index < 0)
+                for (int i = 0; i > indexOffset; i--)
+                    r.node = r.node->getPrevNode();
+
+            setTrailingPointer(index, r.node, r.jumpNode);
+            return r;
+
+        } else {
+            if (jumpPointerOffset > 0)
+                for (int i = 0; i < jumpPointerOffset; i++)
+                    r.jumpNode = r.jumpNode->getNextNode();
+            else
+                for (int i = 1; i > jumpPointerOffset; i--)
+                    r.jumpNode = r.jumpNode->getPrevNode();
+
+            r.node = r.jumpNode->getData();
+
+            for (int i = 0; i <= index % distance; i++)
+                r.node = r.node->getNextNode();
+
+            setTrailingPointer(index, r.node, r.jumpNode);
+            return r;
+        }
+    }
+
+    searchResult nonTrailingSearch(int index) {
+        searchResult r;
+        //Ask for jumpList iteration direction
+        bool forward = this->useForwardSearch(index);
+
+        //Decide starting point of search
+        forward ?
+        r.jumpNode = jumpList->getFirstNode():
+        r.jumpNode = jumpList->getLastNode();
+
+        //Check if jumpList should be iterated or if search should start at the head
+        if (index >= distance) {
+            //Depending on where search starts, the jumpList has to iterate forwards or backwards
+            if (forward) {
+                for (int i = 1; jumpList->hasNext(r.jumpNode); i++, r.jumpNode = r.jumpNode->getNextNode())
+                    if (i == index / distance)
+                        break;
+            } else {
+                for (int i = 0; jumpList->hasPrev(r.jumpNode); i++, r.jumpNode = r.jumpNode->getPrevNode())
+                    if (i == jumpList->getSize() - (index / distance))
+                        break;
+            }
+
+            //Sets node to the data of the determined jumpNode
+            r.node = r.jumpNode->getData();
+        } else
+            r.node = this->getHead();
+
+        //Iterate from pointed-to node to desired node
+        for (int i = 0; i <= index % distance; i++)
+            r.node = r.node->getNextNode();
+
+        setTrailingPointer(index, r.node, r.jumpNode);
+        return r;
+    }
+
+    searchResult regularSearch(int index) {
+        searchResult r;
+        //Ask for jumpList iteration direction
+        bool forward = this->useForwardSearch(index);
+        //Regular search algorithm
+        r.jumpNode = nullptr;
+        r.node = forward ?
+                this->searchFromFront(index):
+                this->searchFromBack(index);
+
+        setTrailingPointer(-1, r.node, r.jumpNode);
+        return r;
+    }
+
+    typedef struct searchCheck {
+        bool done = false;
+        searchResult r {nullptr, nullptr};
+    } sCheck;
+
+    sCheck searchCheck(int index) {
+        sCheck check;
+        if (index == 0) {
+            check.r.node = this->getFirstNode();
+            check.r.jumpNode = nullptr;
+            check.done = true;
+            return check;
+        } else if (index == this->getMaxIndex()) {
+            check.r.node = this->getLastNode();
+            check.r.jumpNode = nullptr;
+            check.done = true;
+            return check;
+        } else if (index < 0 || index > this->getMaxIndex()) {
+            check.r.node = nullptr;
+            check.r.jumpNode = nullptr;
+            check.done = true;
+        } else return check;
+    }
+
     /**
      * May be referred to as 'QuickSearch', is the heart of the QuickList. Searches for the given index by using
      * the QuickList's JumpList to speed up the search.
@@ -210,59 +350,18 @@ public:
      * @return The search result
      */
     searchResult search(int index) {
-        searchResult r;
-        if (index <= 0) {
-            r.node = this->getFirstNode();
-            r.jumpNode = jumpList->getHead();
-            return r;
-        } else if (index >= this->getMaxIndex()) {
-            r.node = this->getLastNode();
-            r.jumpNode = jumpList->getTail();
-            return r;
-        }
-
-        //Ask for jumpList iteration direction
-        bool forward = this->useForwardSearch(index);
+        sCheck check = searchCheck(index);
+        if (check.done)
+            return check.r;
 
         //Only do a QuickSearch procedure if the jumpList is not empty
-        if (!jumpList->isEmpty()) {
-            //Decide starting point of search
-            forward ?
-            r.jumpNode = jumpList->getFirstNode():
-            r.jumpNode = jumpList->getLastNode();
-
-            //Check if jumpList should be iterated or if search should start at the head
-            if (index >= distance) {
-                //Depending on where search starts, the jumpList has to iterate forwards or backwards
-                if (forward) {
-                    for (int i = 1; jumpList->hasNext(r.jumpNode); i++, r.jumpNode = r.jumpNode->getNextNode())
-                        if (i == index / distance)
-                            break;
-                } else {
-                    for (int i = 0; jumpList->hasPrev(r.jumpNode); i++, r.jumpNode = r.jumpNode->getPrevNode())
-                        if (i == jumpList->getSize() - (index / distance))
-                            break;
-                }
-
-                //Sets node to the data of the determined jumpNode
-                r.node = r.jumpNode->getData();
-            } else
-                r.node = this->getHead();
-
-            //Iterate from pointed-to node to desired node
-            for (int i = 0; i <= index % distance; i++)
-                r.node = r.node->getNextNode();
-
-            return r;
-        } else {
-            //Regular search algorithm
-            r.jumpNode = jumpList->getHead();
-            r.node = forward ?
-            this->searchFromFront(index):
-            this->searchFromBack(index);
-
-            return r;
-        }
+        if (!jumpList->isEmpty())
+            if (trailingPointerViable(index))
+                return trailingSearch(index);
+            else
+                return nonTrailingSearch(index);
+        else
+            return regularSearch(index);
     }
 
     /**
@@ -435,16 +534,14 @@ int main() {
     for (int i = 1; i <= 400; i++)
         quickList.removeLast();
         */
-    QuickList<int> quickList1;
-    QuickList<int> quickList2;
+    QuickList<int> quickList;
 
-    for (int i = 1; i <= 395; i++)
-        quickList1.append(i);
+    for (int i = 1; i <= 300; i++)
+        quickList.append(i);
 
-    for (int i = 100; i <= 120; i++)
-        quickList2.append(i);
-
-    int a[5] = {5,6,7,8,9};
-    quickList1.concat(a, sizeof(a) / sizeof(a[0]));
-    quickList1.print();
-}
+    quickList.search(180);
+    quickList.search(185);
+    quickList.search(203);
+    quickList.search(154);
+    quickList.search(154);
+ }
