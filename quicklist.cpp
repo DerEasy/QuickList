@@ -205,12 +205,23 @@ public:
         return false;
     }
 
+    /**
+     * Sets the values of the TrailingPointer
+     * @param index Last used index
+     * @param node Last used node
+     * @param jumpNode Last used jumpNode
+     */
     void setTrailingPointer(int index, Node<T>* node, Node<Node<T>*>* jumpNode) {
         trailingPointer.index = index;
         trailingPointer.node = node;
         trailingPointer.jumpNode = jumpNode;
     }
 
+    /**
+     * Checks if using the TrailingPointer is viable (the most efficient solution) or not
+     * @param index The searched-for index
+     * @return True if search with TrailingPointer is to be used
+     */
     bool trailingPointerViable(int index) {
         return
         trailingPointer.index != -1 &&
@@ -218,9 +229,23 @@ public:
         abs(this->getMaxIndex() - index) > abs(trailingPointer.index - index);
     }
 
+    /**
+     * @param index The searched-for index
+     * @return Offset for the TrailingPointer JumpPointer
+     */
     int trailingJumpPointerOffset(int index) {
         int x = trailingPointer.index - trailingPointer.index % distance;
         return -(x - index) / distance;
+    }
+
+    bool backwardsTraversal(int index, Node<Node<T>*>* jumpNode) {
+        if (
+                jumpNode->getNextNode() != jumpList->getTail() &&
+                abs(index - jumpNode->getData()->getData()) >
+                abs(index - jumpNode->getNextNode()->getData()->getData())
+                ) return true;
+
+        return false;
     }
 
     /**
@@ -259,12 +284,22 @@ public:
                 for (int i = 1; i > jumpPointerOffset; i--)
                     r.jumpNode = r.jumpNode->getPrevNode();
 
+            bool backJump = backwardsTraversal(index, r.jumpNode);
+            if (backJump)
+                r.jumpNode = r.jumpNode->getNextNode();
+
             r.node = r.jumpNode->getData();
 
-            for (int i = 0; i <= index % distance; i++)
-                r.node = r.node->getNextNode();
+            if (!backJump) {
+                for (int i = 0; i <= index % distance; i++)
+                    r.node = r.node->getNextNode();
+                setTrailingPointer(index, r.node, r.jumpNode);
+            } else {
+                for (int i = 0; i <= (distance - index % distance) - 2; i++)
+                    r.node = r.node->getPrevNode();
+                setTrailingPointer(index, r.node, r.jumpNode->getPrevNode());
+            }
 
-            setTrailingPointer(index, r.node, r.jumpNode);
             return r;
         }
     }
@@ -273,6 +308,7 @@ public:
         searchResult r;
         //Ask for jumpList iteration direction
         bool forward = this->useForwardSearch(index);
+        bool backJump = false;
 
         //Decide starting point of search
         forward ?
@@ -292,16 +328,26 @@ public:
                         break;
             }
 
+            backJump = backwardsTraversal(index, r.jumpNode);
+            if (backJump)
+                r.jumpNode = r.jumpNode->getNextNode();
+
             //Sets node to the data of the determined jumpNode
             r.node = r.jumpNode->getData();
         } else
             r.node = this->getHead();
 
         //Iterate from pointed-to node to desired node
-        for (int i = 0; i <= index % distance; i++)
-            r.node = r.node->getNextNode();
+        if (!backJump) {
+            for (int i = 0; i <= index % distance; i++)
+                r.node = r.node->getNextNode();
+            setTrailingPointer(index, r.node, r.jumpNode);
+        } else {
+            for (int i = 0; i <= (distance - index % distance) - 2; i++)
+                r.node = r.node->getPrevNode();
+            setTrailingPointer(index, r.node, r.jumpNode->getPrevNode());
+        }
 
-        setTrailingPointer(index, r.node, r.jumpNode);
         return r;
     }
 
@@ -340,7 +386,7 @@ public:
             check.r.node = nullptr;
             check.r.jumpNode = nullptr;
             check.done = true;
-        } else return check;
+        } return check;
     }
 
     /**
@@ -464,8 +510,8 @@ public:
      * Uses QuickSearch to remove given range from index to index (both inclusive).
      * Works like an iterator and is therefore much faster if removing multiple sequential nodes.
      * The JumpList will be forcibly rebuilt by this method, which can be costly.
-     * @param indexStart The first node by index
-     * @param indexEnd The last node by index
+     * @param indexStart The first node by index (inclusive)
+     * @param indexEnd The last node by index (inclusive)
      */
     void removeRange(int indexStart, int indexEnd) {
         if (rangeCheck(indexStart, indexEnd))
@@ -539,9 +585,9 @@ int main() {
     for (int i = 1; i <= 300; i++)
         quickList.append(i);
 
-    quickList.search(180);
-    quickList.search(185);
-    quickList.search(203);
-    quickList.search(154);
-    quickList.search(154);
+    quickList.search(186);
+    quickList.search(178);
+    quickList.search(202);
+    quickList.search(160);
+    quickList.search(150);
  }

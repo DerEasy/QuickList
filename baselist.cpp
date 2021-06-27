@@ -13,6 +13,10 @@ public:
         return data;
     }
 
+    T getJumpData() {
+        return data->data;
+    }
+
     void setData(T d) {
         data = d;
     }
