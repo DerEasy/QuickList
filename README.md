@@ -1,5 +1,5 @@
 # QuickList [WIP]
-C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed. Benchmarks at the bottom.
+C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed. Time Complexity: O(√n). Benchmarks at the bottom.
 
 # The QuickList is currently being reworked to guarantee a worst case time complexity of O(sqrt(n)). Information below may be outdated, including graphs.
 
