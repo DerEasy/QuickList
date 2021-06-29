@@ -1,7 +1,7 @@
 # QuickList [WIP]
 C++ implementation of a Doubly Linked List, but with drastically improved search, insertion and deletion by index speed. Benchmarks at the bottom.
 
-The QuickList is currently being reworked to guarantee a worst case time complexity of O(sqrt(n)). Information below may be outdated, including graphs.
+# The QuickList is currently being reworked to guarantee a worst case time complexity of O(sqrt(n)). Information below may be outdated, including graphs.
 
 ### Advantages:
 - Can hold huge amounts of nodes (even millions) and retain remarkable efficiency when searching, inserting or deleting by index (explained below)
