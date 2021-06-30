@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <chrono>
 #include "jumplist.cpp"
 
 template <typename T>
@@ -183,7 +184,9 @@ public:
     }
 
     int getTrailingJumpPointerIndex() {
-        return ((trailingPointer.index - trailingPointer.index % distance) / distance) - 1;
+        if (!indexHasPointer(trailingPointer.index))
+            return ((trailingPointer.index - trailingPointer.index % distance) / distance) - 1;
+        return (((trailingPointer.index + 1) - (trailingPointer.index + 1) % distance) / distance) - 1;
     }
 
     /**
@@ -191,13 +194,17 @@ public:
      * @return Offset for the TrailingPointer JumpPointer
      */
     int trailingJumpPointerOffset(int index) {
+        return (index + 1) / distance - (trailingPointer.index + 1) / distance;
+
+        /*
         if (indexHasPointer(index) && trailingPointer.index != index)
             return (((index - index % distance) / distance) - (getTrailingJumpPointerIndex() + 1)) + 1;
         else {
             if (index < trailingPointer.index)
-                return ((index - index % distance) / distance) - (getTrailingJumpPointerIndex() + 1) - 1;
+                return ((index - index % distance) / distance) - (getTrailingJumpPointerIndex());
             return ((index - index % distance) / distance) - (getTrailingJumpPointerIndex() + 1);
         }
+         */
     }
 
     int getJumpIndex(int index) {
@@ -252,13 +259,13 @@ public:
                 return r;
             }
 
-            bool backJump = backwardsTraversal(index);
-            if (backJump)
+            bool traverseJumpBack = backwardsTraversal(index);
+            if (traverseJumpBack)
                 r.jumpNode = r.jumpNode->getNextNode();
 
             r.node = r.jumpNode->getData();
 
-            if (!backJump) {
+            if (!traverseJumpBack) {
                 for (int i = 0; i <= index % distance; i++)
                     r.node = r.node->getNextNode();
                 setTrailingPointer(index, r.node, r.jumpNode);
@@ -276,7 +283,7 @@ public:
         searchResult r;
         //Ask for jumpList iteration direction
         bool forward = this->useForwardSearch(index);
-        bool backJump = backwardsTraversal(index);
+        bool traverseJumpBack = backwardsTraversal(index);
 
         //Decide starting point of search
         forward ?
@@ -307,14 +314,14 @@ public:
             setTrailingPointer(index, r.node, r.jumpNode);
             return r;
         }
-        if (backJump)
+        if (traverseJumpBack)
             r.jumpNode = r.jumpNode->getNextNode();
 
         //Sets node to the data of the determined jumpNode
         r.node = r.jumpNode->getData();
 
         //Iterate from pointed-to node to desired node
-        if (backJump) {
+        if (traverseJumpBack) {
             for (int i = 0; i <= (distance - index % distance) - 2; i++)
                 r.node = r.node->getPrevNode();
             setTrailingPointer(index, r.node, r.jumpNode->getPrevNode());
@@ -339,7 +346,7 @@ public:
                 this->searchFromFront(index):
                 this->searchFromBack(index);
 
-        setTrailingPointer(-1, r.node, r.jumpNode);
+        setTrailingPointer(index, r.node, r.jumpNode);
         return r;
     }
 
@@ -347,13 +354,15 @@ public:
         sCheck check;
         if (index == 0) {
             check.r.node = this->getFirstNode();
-            check.r.jumpNode = nullptr;
+            check.r.jumpNode = jumpList->getHead();
             check.done = true;
+            setTrailingPointer(index, check.r.node, check.r.jumpNode);
             return check;
         } else if (index == this->getMaxIndex()) {
             check.r.node = this->getLastNode();
-            check.r.jumpNode = nullptr;
+            check.r.jumpNode = jumpList->getTail();
             check.done = true;
+            setTrailingPointer(index, check.r.node, check.r.jumpNode);
             return check;
         } else if (index < 0 || index > this->getMaxIndex()) {
             check.r.node = nullptr;
@@ -370,8 +379,10 @@ public:
      */
     searchResult search(int index) {
         sCheck check = searchCheck(index);
-        if (check.done)
+        if (check.done) {
+
             return check.r;
+        }
 
         //Only do a QuickSearch procedure if the jumpList is not empty
         if (!jumpList->isEmpty())
@@ -523,18 +534,58 @@ public:
     }
 };
 
+void testAllSearchTypes() {
+    QuickList<int> q;
+
+    for (int i = 0; i <= 300; i++)
+        q.append(i);
+
+    //Non-Trailing search
+    q.search(2);
+    q.search(297);
+
+    //First and Last
+    q.search(0);
+    q.search(300);
+
+    //Middle
+    q.search(150);
+
+    //JumpPointer
+    q.search(159);
+    q.search(139);
+    q.search(199);
+
+    //Trailing search
+    q.search(224);
+    q.search(227);
+
+    //Non-Trailing search
+    q.search(37);
+    q.search(285);
+    q.search(19);
+}
+
+void testQuickSearchPerformance() {
+    QuickList<int> q;
+
+    for (int i = 0; i <= 999999; i++)
+        q.append(i);
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 1; i <= 80000; i++)
+        q.search(100000 + i * 10);
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    auto ms_int = duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << ms_int.count() << "µs\n";
+}
+
 /**
  * Just some tests. Should be removed for actual usage.
  * @return
  */
 int main() {
-    QuickList<int> quickList;
-
-    for (int i = 0; i <= 300; i++)
-        quickList.append(i);
-
-    quickList.search(126);
-    quickList.search(153);
-    quickList.search(159);
-    quickList.search(120);
+    testAllSearchTypes();
+    testQuickSearchPerformance();
  }
