@@ -62,13 +62,13 @@ Due to the initial and lowest JumpPointer distance being 10, the QuickList is no
 The extra memory usage because of the JumpList in percent is calculated with 1/x with x being the JumpPointer distance thus:
 |JumpPointer Distance|Extra memory usage|Maximum size of QuickList|Maximum amount of JumpPointers|
 |--------------------|------------------|-------------------------|------------------------------|
-|10                  |10%               |399                      |39                            |
-|20                  |5%                |1199                     |59                            |
-|30                  |3.33%             |2399                     |79                            |
-|40                  |2.5%              |3999                     |99                            |
-|50                  |2%                |5999                     |119                           |
-|60                  |1.66%             |8399                     |139                           |
-|70                  |1.42%             |11199                    |159                           |
+|10                  |10%               |199                      |19                            |
+|20                  |5%                |599                      |29                            |
+|30                  |3.33%             |1199                     |39                            |
+|40                  |2.5%              |1999                     |49                            |
+|50                  |2%                |2999                     |59                            |
+|60                  |1.66%             |4199                     |69                            |
+|70                  |1.42%             |5599                     |79                            |
 
 ## Benchmark
 ### Comparison: 10000 single search operations (exact middle)
