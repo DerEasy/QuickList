@@ -49,13 +49,13 @@ Rebuilding the JumpList is a fully automatic and dynamic process, that shall not
 Here you can see the critical sizes at which the JumpList will be rebuilt to the next/previous JumpPointer distance. This table also shows some examples for the first few JumpPointer distances.
 |JumpPointer Distance|Lower critical size|Upper critical size|
 |--------------------|-------------------|-------------------|
-|10                  |None               |400                |
-|20                  |350                |1200               |
-|30                  |1150               |2400               |
-|40                  |2350               |4000               |
-|50                  |3950               |6000               |
-|60                  |5950               |8400               |
-|70                  |8350               |11200              |
+|10                  |None               |200                |
+|20                  |150                |600                |
+|30                  |550                |1200               |
+|40                  |1150               |2000               |
+|50                  |1950               |3000               |
+|60                  |2950               |4200               |
+|70                  |4150               |5600               |
 
 ### Memory usage
 Due to the initial and lowest JumpPointer distance being 10, the QuickList is no different from a normal doubly linked list until a 10th node has been appended to it.
