@@ -6,6 +6,11 @@
 template <typename T>
 class QuickList : public BaseList<T> {
 public:
+    /**
+     * The TrailingPointer allows for constant time sequential operations. Otherwise, it is used
+     * if it is more efficient to iterate the list from its Trailing index than it is to iterate
+     * from head or tail. It does this by saving the search result of the last search operation.
+     */
     typedef struct TrailingPointer {
         int index;
         Node<Node<T>*>* jumpNode;
@@ -13,7 +18,7 @@ public:
     } TrailingPointer;
 
     /**
-    * Is returned by search(int index). Incorporates the searched node and the jumpNode it has been accessed from.
+    * Is returned by search operations. Incorporates the searched node and the jumpNode it has been accessed from.
     */
     typedef struct searchResult {
         Node<T>* node;
@@ -138,7 +143,6 @@ public:
 
     /**
      * Attempts to rebuild the JumpList. Succeeds if upper or lower critical size has been reached.
-     * @param forceRebuild True to force rebuilding the JumpList
      * @return True if JumpList has been rebuilt
      */
     bool rebuildJumpList() {
@@ -160,7 +164,8 @@ public:
     }
 
     /**
-     * Sets the values of the TrailingPointer
+     * Updates the values of the TrailingPointer.
+     * The jumpNode must be a JumpPointer that points to or below the index.
      * @param index Last used index
      * @param node Last used node
      * @param jumpNode Last used jumpNode
@@ -169,6 +174,23 @@ public:
         trailingPointer.index = index;
         trailingPointer.node = node;
         trailingPointer.jumpNode = jumpNode;
+    }
+
+    /**
+     * Attempts to invalidate the TrailingPointer. Used when the index/node/jumpNode becomes
+     * unavailable due to removal etc. The TrailingPointer is hence only invalidated by this
+     * method if its saved index matches the parameter index.
+     * @param index Determines if the TrailingPointer needs to be invalidated or not
+     * @return True if invalidated
+     */
+    bool invalidateTrailingPointer(int index) {
+        if (trailingPointer.index == index) {
+            trailingPointer.index = -1;
+            trailingPointer.node = nullptr;
+            trailingPointer.jumpNode = nullptr;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -183,30 +205,33 @@ public:
         abs(this->getMaxIndex() - index) > abs(trailingPointer.index - index);
     }
 
+    /**
+     * @return The index of the pointed-to node by the TrailingPointer JumpPointer
+     */
     int getTrailingJumpPointerIndex() {
         if (!indexHasPointer(trailingPointer.index))
             return ((trailingPointer.index - trailingPointer.index % distance) / distance) - 1;
-        return (((trailingPointer.index + 1) - (trailingPointer.index + 1) % distance) / distance) - 1;
+        else
+            return (((trailingPointer.index + 1) - (trailingPointer.index + 1) % distance) / distance) - 1;
     }
 
     /**
      * @param index The searched-for index
-     * @return Offset for the TrailingPointer JumpPointer
+     * @return JumpList(!) offset for the TrailingPointer JumpPointer
      */
     int trailingJumpPointerOffset(int index) {
         return (index + 1) / distance - (trailingPointer.index + 1) / distance;
-
-        /*
-        if (indexHasPointer(index) && trailingPointer.index != index)
-            return (((index - index % distance) / distance) - (getTrailingJumpPointerIndex() + 1)) + 1;
-        else {
-            if (index < trailingPointer.index)
-                return ((index - index % distance) / distance) - (getTrailingJumpPointerIndex());
-            return ((index - index % distance) / distance) - (getTrailingJumpPointerIndex() + 1);
-        }
-         */
     }
 
+    /**
+     * Scenario: JumpPointers point to indices 119, 139, 159, and you want to get the nearest index of the node
+     * that is pointed to by a JumpPointer. Input index is 155. This method will return 139 then (It is always
+     * the previous node that is returned, never the next, even if the next one is nearer, like in this case).
+     * If the input index is equal to the index of a node pointed to by a JumpPointer, that same index is
+     * returned, e.g. 139 if your input is 139 in the above example.
+     * @param index
+     * @return The index of the node that is pointed to by a JumpPointer
+     */
     int getJumpIndex(int index) {
         if (indexHasPointer(index))
             return index;
@@ -214,10 +239,21 @@ public:
             return (index - index % distance) - 1;
     }
 
+    /**
+     * This method returns its result only by using arithmetics with the
+     * distance variable. This means that it may return true even if the
+     * index is out of range.
+     * @param index
+     * @return True if index has a JumpPointer
+     */
     bool indexHasPointer(int index) {
         return (index + 1) % distance == 0;
     }
 
+    /**
+     * @param index
+     * @return True if the JumpPointer should be traversed backwards for better efficiency
+     */
     bool backwardsTraversal(int index) {
         int jumpIndex = getJumpIndex(index);
         int nextJumpIndex = jumpIndex + distance;
@@ -230,11 +266,15 @@ public:
         r.jumpNode = trailingPointer.jumpNode;
         r.node = trailingPointer.node;
 
+        //Amount of steps that the JumpPointer has to jump
         int jumpPointerOffset = trailingJumpPointerOffset(index);
 
+        //If the JumpPointer is in range, do not modify the values given by the TrailingPointer
         if (jumpPointerOffset == 0) {
+            //By how many steps is the index off?
             int indexOffset = index - trailingPointer.index;
 
+            //Shift the node indexOffset times in the given direction
             if (indexOffset > 0)
                 for (int i = 0; i < indexOffset; i++)
                     r.node = r.node->getNextNode();
@@ -308,7 +348,7 @@ public:
                     break;
         }
 
-        if (index == getJumpIndex(index)) {
+        if (indexHasPointer(index)) {
             r.jumpNode = r.jumpNode->getNextNode();
             r.node = r.jumpNode->getData();
             setTrailingPointer(index, r.node, r.jumpNode);
@@ -334,6 +374,11 @@ public:
         return r;
     }
 
+    /**
+     * Does a regular search as found in a normal List
+     * @param index
+     * @return The search result
+     */
     searchResult regularSearch(int index) {
         searchResult r;
         //Ask for jumpList iteration direction
@@ -350,6 +395,13 @@ public:
         return r;
     }
 
+    /**
+     * Is index 0? Then return the first node.
+     * Is index n - 1? Then return the last node.
+     * Is index out of range? Then return nullptr as a result; TrailingPointer is not modified.
+     * @param index
+     * @return The search result
+     */
     sCheck searchCheck(int index) {
         sCheck check;
         if (index == 0) {
@@ -373,22 +425,24 @@ public:
 
     /**
      * May be referred to as 'QuickSearch', is the heart of the QuickList. Searches for the given index by using
-     * the QuickList's JumpList to speed up the search.
+     * the QuickList's JumpList and TrailingPointer to speed up the search.
      * @param index
      * @return The search result
      */
     searchResult search(int index) {
+        //Check if index is in range and if it should return first or last node instead
         sCheck check = searchCheck(index);
-        if (check.done) {
-
+        if (check.done)
             return check.r;
-        }
 
         //Only do a QuickSearch procedure if the jumpList is not empty
         if (!jumpList->isEmpty())
+            //Check if using the TrailingPointer to navigate the QuickList is most efficient
             if (trailingPointerViable(index))
+                //Do a Trailing search if it is cost-efficient
                 return trailingSearch(index);
             else
+                //Do a Non-Trailing search if starting from the head or tail is cost-efficient
                 return nonTrailingSearch(index);
         else
             return regularSearch(index);
@@ -453,6 +507,7 @@ public:
      * @param index
      */
     void remove(int index) override {
+        invalidateTrailingPointer(index);
         if (removeCheck(index))
             return;
 
@@ -559,6 +614,7 @@ void testAllSearchTypes() {
     //Trailing search
     q.search(224);
     q.search(227);
+    q.search(220);
 
     //Non-Trailing search
     q.search(37);
@@ -587,5 +643,4 @@ void testQuickSearchPerformance() {
  */
 int main() {
     testAllSearchTypes();
-    testQuickSearchPerformance();
  }
