@@ -60,4 +60,20 @@ public:
             jumpNode = jumpNode->getNextNode();
         }
     }
+
+    void debug_print(int distance)  {
+        if (this->isEmpty()) {
+            std::cout << "JumpList @" << this << " is empty\n";
+            return;
+        }
+
+        Node<Node<T>*>* node = this->getFirstNode();
+        int index = 0;
+        while (this->hasNext(node)) {
+            std::cout << "Index " << index << " -> Index " << index * distance + 9 << ":\t" << node->getData()->getData() << "\n";
+            node = node->getNextNode();
+            index++;
+        }
+        std::cout << "\n";
+    }
 };

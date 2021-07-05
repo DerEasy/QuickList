@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include "node.cpp"
 
 template <typename T>
@@ -274,59 +273,85 @@ public:
         }
     }
 
-    void removeAllOccurrences(T data) {
+    bool removeNthOccurrenceFromFront(T data, int n) {
+        if (n < 1 || n > getSize())
+            return false;
+
+        int counter = 0;
+        Node<T>* node = getFirstNode();
+        while (hasNext(node)) {
+            if (node->getData() == data)
+                counter++;
+            if (node->getData() == data && counter == n) {
+                removeNode(node);
+                return true;
+            }
+            node = node->getNextNode();
+        }
+        return false;
+    }
+
+    bool removeNthOccurrenceFromBack(T data, int n) {
+        if (n < 1 || n > getSize())
+            return false;
+
+        int counter = 0;
+        Node<T>* node = getLastNode();
+        while (hasPrev(node)) {
+            if (node->getData() == data)
+                counter++;
+            if (node->getData() == data && counter == n) {
+                removeNode(node);
+                return true;
+            }
+            node = node->getPrevNode();
+        }
+        return false;
+    }
+
+    bool removeAllOccurrences(T data) {
+        bool hasRemoved = false;
         Node<T>* node = getFirstNode();
         while (hasNext(node)) {
             if (node->getData() == data) {
                 node = node->getNextNode();
                 removeNode(node->getPrevNode());
+                hasRemoved = true;
                 continue;
             }
             node = node->getNextNode();
         }
+        return hasRemoved;
     }
 
-    void print() {
+    virtual void debug_print() {
         if (isEmpty()) {
-            std::cout << "QuickList @" << this << " empty\n";
+            std::cout << "QuickList @" << this << " is empty\n";
             return;
         }
 
         Node<T>* node = getFirstNode();
         int index = 0;
         while (hasNext(node)) {
-            std::cout << index << ": " << node->getData() << "\n";
+            std::cout << "Index " << index << ":\t" << node->getData() << "\n";
             node = node->getNextNode();
             index++;
         }
         std::cout << "\n";
     }
 
-    void printReverse() {
+    virtual void debug_printReverse() {
         if (isEmpty()) {
-            std::cout << "QuickList @" << this << " empty\n";
+            std::cout << "QuickList @" << this << " is empty\n";
             return;
         }
 
         Node<T>* node = getLastNode();
+        int index = getMaxIndex();
         while (hasPrev(node)) {
-            std::cout << node->getData() << "\n";
+            std::cout << "Index " << index << ":\t" << node->getData() << "\n";
             node = node->getPrevNode();
         }
         std::cout << "\n";
-    }
-
-    void writeToFile() {
-        std::ofstream file;
-        file.open("output.txt");
-
-        Node<T>* node = this->getFirstNode();
-        int index = 0;
-        while (this->hasNext(node)) {
-            file << index << ": " << node->getData() << "\n";
-            node = node->getNextNode();
-            index++;
-        }
-        file.close();
     }
 };
