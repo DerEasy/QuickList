@@ -52,6 +52,7 @@ public:
      */
     void incSize() override {
         this->size++;
+        //Ensures that no duplicate JumpPointers get appended
         bool rebuilt = rebuildJumpList();
 
         if (!rebuilt && getsJumpPointer())
@@ -487,8 +488,8 @@ public:
             return;
 
         searchResult r = search(index);
-        this->linkUpNode(new Node<T>, r.node, data);
         jumpList.leftPointerShift(distance, index, r.jumpNode);
+        this->linkUpNode(new Node<T>, r.node, data);
 
         r.jumpNode->setData(r.jumpNode->getData()->getPrevNode());
         trailingPointer.jumpNode->setData(r.jumpNode->getData());
@@ -641,8 +642,12 @@ void testQuickSearchPerformance() {
     for (int i = 0; i < 50; i++)
         q.append(i);
 
-    for (int i = 0; i <= 20; i++)
+    for (int i = 0; i <= 20; i++) {
+        q.debug_print();
+        q.jumpList.debug_print(q.distance);
         q.add(49, 10020 - i);
+    }
+
 
     q.debug_print();
     q.jumpList.debug_print(q.distance);
