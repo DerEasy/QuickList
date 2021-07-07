@@ -13,16 +13,17 @@ public:
      */
     typedef struct TrailingPointer {
         int index;
-        Node<Node<T>*>* jumpNode;
+        Node<Node<T>*>* jumpPointer;
         Node<T>* node;
     } TrailingPointer;
 
     /**
-    * Is returned by search operations. Incorporates the searched node and the jumpNode it has been accessed from.
-    */
+     * Is returned by search operations. Incorporates the searched node and the jumpPointer
+     * it has been accessed from.
+     */
     typedef struct searchResult {
         Node<T>* node;
-        Node<Node<T>*>* jumpNode;
+        Node<Node<T>*>* jumpPointer;
     } searchResult;
 
     typedef struct searchCheck {
@@ -34,7 +35,8 @@ public:
     //This is the core functionality of a QuickList
     JumpList<T> jumpList;
 
-    //TrailingPointer keeps track of the last used node and jumpNode to speed up (semi-)sequential rw operations
+    //TrailingPointer keeps track of the last used node and jumpPointer
+    //to speed up (semi-)sequential rw operations
     TrailingPointer trailingPointer = {-1, nullptr, nullptr};
 
     //Distance between individual JumpPointers. Initial: 10
@@ -162,19 +164,23 @@ public:
 
     /**
      * Updates the values of the TrailingPointer.
-     * The jumpNode must be a JumpPointer that points to or below the index.
+     * The jumpPointer
+     *must be a JumpPointer that points to or below the index.
      * @param index Last used index
      * @param node Last used node
-     * @param jumpNode Last used jumpNode
+     * @param jumpPointer
+     *Last used jumpPointer
+     *
      */
-    void setTrailingPointer(int index, Node<T>* node, Node<Node<T>*>* jumpNode) {
+    void setTrailingPointer(int index, Node<T>* node, Node<Node<T>*>* jumpPointer) {
         trailingPointer.index = index;
         trailingPointer.node = node;
-        trailingPointer.jumpNode = jumpNode;
+        trailingPointer.jumpPointer= jumpPointer;
     }
 
     /**
-     * Attempts to invalidate the TrailingPointer. Used when the index/node/jumpNode becomes
+     * Attempts to invalidate the TrailingPointer. Used when the index/node/jumpPointer
+     *becomes
      * unavailable due to removal etc. The TrailingPointer is hence only invalidated by this
      * method if its saved index matches the parameter index.
      * @param index Determines if the TrailingPointer needs to be invalidated or not
@@ -184,7 +190,7 @@ public:
         if (trailingPointer.index == index) {
             trailingPointer.index = -1;
             trailingPointer.node = nullptr;
-            trailingPointer.jumpNode = nullptr;
+            trailingPointer.jumpPointer= nullptr;
             return true;
         }
         return false;
@@ -193,7 +199,7 @@ public:
     void forceInvalidateTrailingPointer() {
         trailingPointer.index = -1;
         trailingPointer.node = nullptr;
-        trailingPointer.jumpNode = nullptr;
+        trailingPointer.jumpPointer= nullptr;
     }
 
     /**
@@ -266,7 +272,7 @@ public:
 
     searchResult trailingSearch(int index) {
         searchResult r;
-        r.jumpNode = trailingPointer.jumpNode;
+        r.jumpPointer= trailingPointer.jumpPointer;
         r.node = trailingPointer.node;
 
         //Amount of steps that the JumpPointer has to jump
@@ -285,37 +291,37 @@ public:
                 for (int i = 0; i > indexOffset; i--)
                     r.node = r.node->getPrevNode();
 
-            setTrailingPointer(index, r.node, r.jumpNode);
+            setTrailingPointer(index, r.node, r.jumpPointer);
             return r;
 
         } else {
             if (jumpPointerOffset > 0)
                 for (int i = 0; i < jumpPointerOffset; i++)
-                    r.jumpNode = r.jumpNode->getNextNode();
+                    r.jumpPointer= r.jumpPointer->getNextNode();
             else
                 for (int i = jumpPointerOffset; i < 0; i++)
-                    r.jumpNode = r.jumpNode->getPrevNode();
+                    r.jumpPointer= r.jumpPointer->getPrevNode();
 
             if (indexHasPointer(index)) {
-                r.node = r.jumpNode->getData();
-                setTrailingPointer(index, r.node, r.jumpNode);
+                r.node = r.jumpPointer->getData();
+                setTrailingPointer(index, r.node, r.jumpPointer);
                 return r;
             }
 
             bool traverseJumpBack = backwardsTraversal(index);
             if (traverseJumpBack)
-                r.jumpNode = r.jumpNode->getNextNode();
+                r.jumpPointer= r.jumpPointer->getNextNode();
 
-            r.node = r.jumpNode->getData();
+            r.node = r.jumpPointer->getData();
 
             if (!traverseJumpBack) {
                 for (int i = 0; i <= index % distance; i++)
                     r.node = r.node->getNextNode();
-                setTrailingPointer(index, r.node, r.jumpNode);
+                setTrailingPointer(index, r.node, r.jumpPointer);
             } else {
                 for (int i = 0; i <= (distance - index % distance) - 2; i++)
                     r.node = r.node->getPrevNode();
-                setTrailingPointer(index, r.node, r.jumpNode->getPrevNode());
+                setTrailingPointer(index, r.node, r.jumpPointer->getPrevNode());
             }
 
             return r;
@@ -330,8 +336,8 @@ public:
 
         //Decide starting point of search
         forward ?
-        r.jumpNode = jumpList.getHead():
-        r.jumpNode = jumpList.getTail();
+        r.jumpPointer= jumpList.getHead():
+        r.jumpPointer= jumpList.getTail();
 
         //Check if jumpList should be iterated or if search should start at the head
         //Depending on where search starts, the jumpList has to iterate forwards or backwards
@@ -339,39 +345,39 @@ public:
             if (index < (distance - 1) - index)
                 return regularSearch(index);
 
-            for (int i = 0; jumpList.hasNext(r.jumpNode); i++, r.jumpNode = r.jumpNode->getNextNode())
+            for (int i = 0; jumpList.hasNext(r.jumpPointer); i++, r.jumpPointer= r.jumpPointer->getNextNode())
                 if (i == index / distance)
                     break;
         } else {
             if (index - getJumpIndex(index) > this->getSize() - index)
                 return regularSearch(index);
 
-            for (int i = -1; jumpList.hasPrev(r.jumpNode); i++, r.jumpNode = r.jumpNode->getPrevNode())
+            for (int i = -1; jumpList.hasPrev(r.jumpPointer); i++, r.jumpPointer= r.jumpPointer->getPrevNode())
                 if (i == jumpList.getSize() - (index / distance))
                     break;
         }
 
         if (indexHasPointer(index)) {
-            r.jumpNode = r.jumpNode->getNextNode();
-            r.node = r.jumpNode->getData();
-            setTrailingPointer(index, r.node, r.jumpNode);
+            r.jumpPointer= r.jumpPointer->getNextNode();
+            r.node = r.jumpPointer->getData();
+            setTrailingPointer(index, r.node, r.jumpPointer);
             return r;
         }
         if (traverseJumpBack)
-            r.jumpNode = r.jumpNode->getNextNode();
+            r.jumpPointer= r.jumpPointer->getNextNode();
 
-        //Sets node to the data of the determined jumpNode
-        r.node = r.jumpNode->getData();
+        //Sets node to the data of the determined jumpPointer
+        r.node = r.jumpPointer->getData();
 
         //Iterate from pointed-to node to desired node
         if (traverseJumpBack) {
             for (int i = 0; i <= (distance - index % distance) - 2; i++)
                 r.node = r.node->getPrevNode();
-            setTrailingPointer(index, r.node, r.jumpNode->getPrevNode());
+            setTrailingPointer(index, r.node, r.jumpPointer->getPrevNode());
         } else {
             for (int i = 0; i <= index % distance; i++)
                 r.node = r.node->getNextNode();
-            setTrailingPointer(index, r.node, r.jumpNode);
+            setTrailingPointer(index, r.node, r.jumpPointer);
         }
 
         return r;
@@ -387,21 +393,22 @@ public:
         //Ask for jumpList iteration direction
         bool forward = this->useForwardSearch(index);
 
-        //Trailing JumpPointer must always be the previous jumpNode, therefore we use
+        //Trailing JumpPointer must always be the previous jumpPointer
+        //, therefore we use
         //the head when iterating forwards, but the penultimate one when iterating backwards.
-        r.jumpNode = forward ?
+        r.jumpPointer= forward ?
                 jumpList.getHead():
                 jumpList.getLastNode();
 
         if (index < jumpList.getSize() * distance - 1 && index > jumpList.getSize() * distance - distance - 1)
-            r.jumpNode = r.jumpNode->getPrevNode();
+            r.jumpPointer= r.jumpPointer->getPrevNode();
 
         //Regular search algorithm
         r.node = forward ?
                 this->searchFromFront(index):
                 this->searchFromBack(index);
 
-        setTrailingPointer(index, r.node, r.jumpNode);
+        setTrailingPointer(index, r.node, r.jumpPointer);
         return r;
     }
 
@@ -416,19 +423,19 @@ public:
         sCheck check;
         if (index == 0) {
             check.r.node = this->getFirstNode();
-            check.r.jumpNode = jumpList.getHead();
+            check.r.jumpPointer= jumpList.getHead();
             check.done = true;
-            setTrailingPointer(index, check.r.node, check.r.jumpNode);
+            setTrailingPointer(index, check.r.node, check.r.jumpPointer);
             return check;
         } else if (index == this->getMaxIndex()) {
             check.r.node = this->getLastNode();
-            check.r.jumpNode = jumpList.getLastNode();
+            check.r.jumpPointer= jumpList.getLastNode();
             check.done = true;
-            setTrailingPointer(index, check.r.node, check.r.jumpNode);
+            setTrailingPointer(index, check.r.node, check.r.jumpPointer);
             return check;
         } else if (index < 0 || index > this->getMaxIndex()) {
             check.r.node = nullptr;
-            check.r.jumpNode = nullptr;
+            check.r.jumpPointer= nullptr;
             check.done = true;
         } return check;
     }
@@ -488,12 +495,12 @@ public:
             return;
 
         searchResult r = search(index);
-        jumpList.leftPointerShift(distance, index, r.jumpNode);
+        jumpList.leftPointerShift(distance, index, r.jumpPointer);
         this->linkUpNode(new Node<T>, r.node, data);
 
-        r.jumpNode->setData(r.jumpNode->getData()->getPrevNode());
-        trailingPointer.jumpNode->setData(r.jumpNode->getData());
-        trailingPointer.node = r.jumpNode->getData();
+        r.jumpPointer->setData(r.jumpPointer->getData()->getPrevNode());
+        trailingPointer.jumpPointer->setData(r.jumpPointer->getData());
+        trailingPointer.node = r.jumpPointer->getData();
     }
 
     /**
@@ -526,7 +533,7 @@ public:
             return;
 
         searchResult r = search(index);
-        jumpList.rightPointerShift(distance, index, r.jumpNode);
+        jumpList.rightPointerShift(distance, index, r.jumpPointer);
         this->removeNode(r.node);
     }
 
@@ -639,6 +646,96 @@ void testAllSearchTypes() {
 void testQuickSearchPerformance() {
     QuickList<int> q;
 
+    std::cout << "\nTrailingPointer is force-invalidated after every subroutine.\n\n";
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 1000000; i++)
+        q.append(i);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << duration.count() << "µs appension (1.000.000 nodes)\n\n";
+
+    t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 50000; i++)
+        q.search(500000 + i);
+    t2 = std::chrono::high_resolution_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << duration.count() << "µs constant access (index 500.000 to 549.999)\n\n";
+
+    q.forceInvalidateTrailingPointer();
+
+    t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 1; i <= 50000; i++)
+        q.search(900000 / i);
+    t2 = std::chrono::high_resolution_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << duration.count() << "µs gradual access (index 900.000 / i, i = 1 -> 50.000)\n\n";
+
+    q.forceInvalidateTrailingPointer();
+
+    t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 50000; i++)
+        q.search(100000 + ((i % 1250) * 640));
+    t2 = std::chrono::high_resolution_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << duration.count() << "µs trailing access (index 100.000, jumps of 640, 50.000 times)\n\n";
+
+    q.forceInvalidateTrailingPointer();
+
+    t1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 50000; i++)
+        q.search(random() % 1000000);
+    t2 = std::chrono::high_resolution_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << duration.count() << "µs random access (50.000 times)\n\n";
+
+    std::cout << "QuickSearch test successfully completed.\n";
+}
+
+void testQuickSearchAccuracy() {
+    QuickList<int> q;
+
+    std::cout << "\nTesting QuickSearch accuracy...\n";
+
+    for (int i = 0; i < 1000000; i++)
+        q.append(i);
+
+    for (int i = 0; i < 50000; i++) {
+        q.search(500000 + i);
+        if (q.trailingPointer.index != 500000 + i ||
+            q.trailingPointer.node->getData() != 500000 + i)
+            std::cout << "Constant access error at i = " << i;
+    }
+
+    for (int i = 1; i <= 50000; i++) {
+        q.search(900000 / i);
+        if (q.trailingPointer.index != 900000 / i ||
+            q.trailingPointer.node->getData() != 900000 / i)
+            std::cout << "Gradual access error at i = " << i;
+    }
+
+    for (int i = 0; i < 50000; i++) {
+        q.search(100000 + ((i % 1250) * 640));
+        if (q.trailingPointer.index != 100000 + ((i % 1250) * 640) ||
+            q.trailingPointer.node->getData() != 100000 + ((i % 1250) * 640))
+            std::cout << "Trailing access error at i = " << i;
+    }
+
+    int r;
+    for (int i = 0; i < 50000; i++) {
+        r = random() % 1000000;
+        q.search(r);
+        if (q.trailingPointer.index != r  ||
+            q.trailingPointer.node->getData() != r)
+            std::cout << "Random access error at i = " << i;
+    }
+
+    std::cout << "QuickSearch accuracy test successful. QuickSearch is stable and functioning.\n";
+}
+
+void testAdd() {
+    QuickList<int> q;
+
     for (int i = 0; i < 50; i++)
         q.append(i);
 
@@ -651,17 +748,6 @@ void testQuickSearchPerformance() {
 
     q.debug_print();
     q.jumpList.debug_print(q.distance);
-
-    /*
-    auto t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 10000; i++)
-        q.search(random() % 300);
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    auto duration = duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << duration.count() << "µs\n";
-     */
-
 }
 
 /**
@@ -669,5 +755,5 @@ void testQuickSearchPerformance() {
  * @return
  */
 int main() {
-    testQuickSearchPerformance();
+    testQuickSearchAccuracy();
  }

@@ -8,37 +8,37 @@ class JumpList : public BaseList<Node<T>*> {
 public:
     /**
      * Has to be used in place of hasNext() to ensure that the tail of the JumpList will not be selected
-     * @param jumpNode
-     * @return True if the jumpNode is followed by another jumpNode that is not the tail
+     * @param jumpPointer
+     * @return True if the jumpPointer is followed by another jumpPointer that is not the tail
      */
-    bool hasNextJump(Node<Node<T>*>* jumpNode) {
-        return jumpNode->getNextNode() != this->getTail();
+    bool hasNextJump(Node<Node<T>*>* jumpPointer) {
+        return jumpPointer->getNextNode() != this->getTail();
     }
 
-    Node<T>* getPrevNodeOfNextJumpData(Node<Node<T>*>* jumpNode) {
-        return jumpNode->getNextNode()->getData()->getPrevNode();
+    Node<T>* getPrevNodeOfNextJumpData(Node<Node<T>*>* jumpPointer) {
+        return jumpPointer->getNextNode()->getData()->getPrevNode();
     }
 
-    Node<T>* getNextNodeOfNextJumpData(Node<Node<T>*>* jumpNode) {
-        return jumpNode->getNextNode()->getData()->getNextNode();
+    Node<T>* getNextNodeOfNextJumpData(Node<Node<T>*>* jumpPointer) {
+        return jumpPointer->getNextNode()->getData()->getNextNode();
     }
 
     /**
      * Shifts all affected JumpPointers to the left to accommodate for a new node in the QuickList
      * @param distance JumpPointer distance
      * @param index
-     * @param jumpNode The first affected JumpPointer
+     * @param jumpPointer The first affected JumpPointer
      */
-    void leftPointerShift(int distance, int index, Node<Node<T>*>* jumpNode) {
-        if (jumpNode == nullptr || jumpNode == this->getHead() || jumpNode == this->getTail())
+    void leftPointerShift(int distance, int index, Node<Node<T>*>* jumpPointer) {
+        if (jumpPointer == nullptr || jumpPointer == this->getHead() || jumpPointer == this->getTail())
             return;
 
         if (index < distance)
-            jumpNode->setData(jumpNode->getData()->getPrevNode());
+            jumpPointer->setData(jumpPointer->getData()->getPrevNode());
 
-        while (this->hasNextJump(jumpNode)) {
-            jumpNode->getNextNode()->setData(this->getPrevNodeOfNextJumpData(jumpNode));
-            jumpNode = jumpNode->getNextNode();
+        while (this->hasNextJump(jumpPointer)) {
+            jumpPointer->getNextNode()->setData(this->getPrevNodeOfNextJumpData(jumpPointer));
+            jumpPointer = jumpPointer->getNextNode();
         }
     }
 
@@ -46,18 +46,18 @@ public:
      * Shifts all affected JumpPointers to the right to accommodate for a removed node in the QuickList
      * @param distance JumpPointer distance
      * @param index
-     * @param jumpNode The first affected JumpPointer
+     * @param jumpPointer The first affected JumpPointer
      */
-    void rightPointerShift(int distance, int index, Node<Node<T>*>* jumpNode) {
-        if (jumpNode == this->getHead() || jumpNode == this->getTail())
+    void rightPointerShift(int distance, int index, Node<Node<T>*>* jumpPointer) {
+        if (jumpPointer == this->getHead() || jumpPointer == this->getTail())
             return;
 
         if (index < distance)
-            jumpNode->setData(jumpNode->getData()->getNextNode());
+            jumpPointer->setData(jumpPointer->getData()->getNextNode());
 
-        while (this->hasNextJump(jumpNode)) {
-            jumpNode->getNextNode()->setData(this->getNextNodeOfNextJumpData(jumpNode));
-            jumpNode = jumpNode->getNextNode();
+        while (this->hasNextJump(jumpPointer)) {
+            jumpPointer->getNextNode()->setData(this->getNextNodeOfNextJumpData(jumpPointer));
+            jumpPointer = jumpPointer->getNextNode();
         }
     }
 
