@@ -70,7 +70,7 @@ public:
         Node<Node<T>*>* node = this->getFirstNode();
         int index = 0;
         while (this->hasNext(node)) {
-            std::cout << "Index " << index << " -> Index " << index * distance + 9 << ":\t" << node->getData()->getData() << "\n";
+            std::cout << "Index " << index << " -> Index " << index * distance + distance - 1 << ":\t" << node->getData()->getData() << "\n";
             node = node->getNextNode();
             index++;
         }
