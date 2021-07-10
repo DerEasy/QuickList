@@ -112,7 +112,7 @@ public:
             removeFirst();
     }
 
-    void prepend(T data) {
+    virtual void prepend(T data) {
         auto* node = new Node<T>;
         node->setData(data);
 

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <chrono>
 #include "jumplist.cpp"
 
 template <typename T>
@@ -218,7 +217,7 @@ public:
      * @return The index of the pointed-to node by the TrailingPointer JumpPointer
      */
     int getTrailingJumpPointerIndex() {
-        if (!indexHasPointer(trailingPointer.index))
+        if (!indexHasJumpPointer(trailingPointer.index))
             return ((trailingPointer.index - trailingPointer.index % distance) / distance) - 1;
         else
             return (((trailingPointer.index + 1) - (trailingPointer.index + 1) % distance) / distance) - 1;
@@ -242,7 +241,7 @@ public:
      * @return The index of the node that is pointed to by a JumpPointer
      */
     int getJumpIndex(int index) {
-        if (indexHasPointer(index))
+        if (indexHasJumpPointer(index))
             return index;
         else
             return (index - index % distance) - 1;
@@ -255,7 +254,7 @@ public:
      * @param index
      * @return True if index has a JumpPointer
      */
-    bool indexHasPointer(int index) {
+    bool indexHasJumpPointer(int index) {
         return (index + 1) % distance == 0;
     }
 
@@ -302,7 +301,7 @@ public:
                 for (int i = jumpPointerOffset; i < 0; i++)
                     r.jumpPointer= r.jumpPointer->getPrevNode();
 
-            if (indexHasPointer(index)) {
+            if (indexHasJumpPointer(index)) {
                 r.node = r.jumpPointer->getData();
                 setTrailingPointer(index, r.node, r.jumpPointer);
                 return r;
@@ -357,7 +356,7 @@ public:
                     break;
         }
 
-        if (indexHasPointer(index)) {
+        if (indexHasJumpPointer(index)) {
             r.jumpPointer= r.jumpPointer->getNextNode();
             r.node = r.jumpPointer->getData();
             setTrailingPointer(index, r.node, r.jumpPointer);
@@ -495,12 +494,28 @@ public:
             return;
 
         searchResult r = search(index);
-        jumpList.leftPointerShift(distance, index, r.jumpPointer);
         this->linkUpNode(new Node<T>, r.node, data);
+        jumpList.leftPointerShift(distance, index, r.jumpPointer);
+        setTrailingPointer(index, r.node->getPrevNode(), r.jumpPointer);
 
-        r.jumpPointer->setData(r.jumpPointer->getData()->getPrevNode());
+        /*if (indexHasJumpPointer(index))
+            r.jumpPointer->setData(r.jumpPointer->getData()->getPrevNode());
         trailingPointer.jumpPointer->setData(r.jumpPointer->getData());
-        trailingPointer.node = r.jumpPointer->getData();
+        trailingPointer.node = r.node->getPrevNode();*/
+    }
+
+    void prepend(T data) override {
+        auto* node = new Node<T>;
+        node->setData(data);
+
+        node->setPrevNode(this->getHead());
+        node->setNextNode(this->getFirstNode());
+
+        this->getHead()->setNextNode(node);
+        node->getNextNode()->setPrevNode(node);
+
+        jumpList.leftPointerShift(distance, 0, jumpList.getFirstNode());
+        incSize();
     }
 
     /**
@@ -609,160 +624,3 @@ public:
         return r.node->getData();
     }
 };
-
-void testAllSearchTypes() {
-    QuickList<int> q;
-
-    for (int i = 0; i <= 300; i++)
-        q.append(i);
-
-    //Non-Trailing search
-    q.search(2);
-    q.search(297);
-
-    //First and Last
-    q.search(0);
-    q.search(300);
-
-    //Middle
-    q.search(150);
-
-    //JumpPointer
-    q.search(159);
-    q.search(139);
-    q.search(199);
-
-    //Trailing search
-    q.search(224);
-    q.search(227);
-    q.search(220);
-
-    //Non-Trailing search
-    q.search(37);
-    q.search(285);
-    q.search(19);
-}
-
-void testQuickSearchPerformance() {
-    QuickList<int> q;
-
-    std::cout << "\nTesting QuickSearch speed...\n";
-    std::cout << "TrailingPointer is force-invalidated after every subroutine.\n\n";
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 1000000; i++)
-        q.append(i);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << duration.count() << "µs appension (1.000.000 nodes)\n";
-
-    t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 50000; i++)
-        q.search(i);
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << duration.count() << "µs constant access (index 500.000 to 549.999)\n";
-
-    q.forceInvalidateTrailingPointer();
-
-    t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 50000; i++)
-        q.search(100000 + ((i % 1250) * 640));
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << duration.count() << "µs trailing access (index 100.000, jumps of 640, 50.000 times)\n";
-
-    q.forceInvalidateTrailingPointer();
-
-    t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 50000; i++)
-        q.search(random() % 1000000);
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << duration.count() << "µs random access (50.000 times)\n\n";
-
-    std::cout << "QuickSearch speed test successful.\n";
-}
-
-void testQuickSearchAccuracy() {
-    QuickList<int> q;
-
-    std::cout << "\nTesting QuickSearch accuracy...\n";
-
-    for (int i = 0; i < 1000000; i++)
-        q.append(i);
-
-    for (int i = 0; i < 50000; i++) {
-        q.search(500000 + i);
-        if (q.trailingPointer.index != 500000 + i ||
-            q.trailingPointer.node->getData() != 500000 + i) {
-            std::cout << "Constant access error at i = " << i;
-            q.forceInvalidateTrailingPointer();
-            break;
-        }
-    }
-
-    for (int i = 1; i <= 50000; i++) {
-        q.search(900000 / i);
-        if (q.trailingPointer.index != 900000 / i ||
-            q.trailingPointer.node->getData() != 900000 / i) {
-            std::cout << "Gradual access error at i = " << i;
-            q.forceInvalidateTrailingPointer();
-            break;
-        }
-    }
-
-    for (int i = 0; i < 50000; i++) {
-        q.search(100000 + ((i % 1250) * 640));
-        if (q.trailingPointer.index != 100000 + ((i % 1250) * 640) ||
-            q.trailingPointer.node->getData() != 100000 + ((i % 1250) * 640)) {
-            std::cout << "Trailing access error at i = " << i;
-            q.forceInvalidateTrailingPointer();
-            break;
-        }
-    }
-
-    int r;
-    for (int i = 0; i < 50000; i++) {
-        r = random() % 1000000;
-        q.search(r);
-        if (q.trailingPointer.index != r  ||
-            q.trailingPointer.node->getData() != r) {
-            std::cout << "Random access error at i = " << i;
-            return;
-        }
-    }
-
-    std::cout << "QuickSearch accuracy test successful. QuickSearch is stable and functioning.\n";
-}
-
-void testAdd() {
-    QuickList<int> q;
-
-    std::cout << "\nTesting QuickList add function...\n";
-
-    for (int i = 0; i < 300; i++)
-        q.append(i);
-
-    for (int i = 0; i <= 50; i++) {
-        q.debug_print();
-        q.jumpList.debug_print(q.distance);
-        q.add(49, 10050 - i);
-    }
-
-    q.debug_print();
-    q.jumpList.debug_print(q.distance);
-
-    std::cout << "Done. Check log for output.\n";
-}
-
-/**
- * Just some tests. Should be removed for actual usage.
- * @return
- */
-int main() {
-    testQuickSearchPerformance();
-    testQuickSearchAccuracy();
-    //Fails
-    //testAdd();
- }

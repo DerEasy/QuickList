@@ -6,6 +6,9 @@
 template <typename T>
 class JumpList : public BaseList<Node<T>*> {
 public:
+    JumpList() {
+
+    }
     /**
      * Has to be used in place of hasNext() to ensure that the tail of the JumpList will not be selected
      * @param jumpPointer
@@ -30,8 +33,11 @@ public:
      * @param jumpPointer The first affected JumpPointer
      */
     void leftPointerShift(int distance, int index, Node<Node<T>*>* jumpPointer) {
-        if (jumpPointer == nullptr || jumpPointer == this->getHead() || jumpPointer == this->getTail())
+        if (jumpPointer == nullptr || jumpPointer == this->getTail())
             return;
+
+        if (jumpPointer == this->getHead())
+            jumpPointer = this->getFirstNode();
 
         if (index < distance)
             jumpPointer->setData(jumpPointer->getData()->getPrevNode());
