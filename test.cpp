@@ -102,14 +102,25 @@ bool testQuickSearchAccuracy() {
     for (int i = 0; i < 1000000; i++)
         q.append(i);
 
-    for (int i = 0; i < 50000; i++) {
+    for (int i = 0; i < 25000; i++) {
         q.search(500000 + i);
         if (q.trailingPointer.index != 500000 + i ||
         q.trailingPointer.node->getData() != 500000 + i) {
-            std::cout << "Constant access error at i = " << i;
+            std::cout << "Constant access (next) error at i = " << i << "\n";
             q.forceInvalidateTrailingPointer();
             success = false;
-            break;
+            continue;
+        }
+    }
+
+    for (int i = 0; i < 25000; i++) {
+        q.search(524999 - i);
+        if (q.trailingPointer.index != 524999 - i ||
+        q.trailingPointer.node->getData() != 524999 - i) {
+            std::cout << "Constant access (prev) error at i = " << i << "\n";
+            q.forceInvalidateTrailingPointer();
+            success = false;
+            continue;
         }
     }
 
@@ -117,10 +128,10 @@ bool testQuickSearchAccuracy() {
         q.search(100000 + ((i % 1250) * 640));
         if (q.trailingPointer.index != 100000 + ((i % 1250) * 640) ||
         q.trailingPointer.node->getData() != 100000 + ((i % 1250) * 640)) {
-            std::cout << "Trailing access error at i = " << i;
+            std::cout << "Trailing access error at i = " << i << "\n";
             q.forceInvalidateTrailingPointer();
             success = false;
-            break;
+            continue;
         }
     }
 
@@ -130,9 +141,9 @@ bool testQuickSearchAccuracy() {
         q.search(r);
         if (q.trailingPointer.index != r  ||
         q.trailingPointer.node->getData() != r) {
-            std::cout << "Random access error at i = " << i;
+            std::cout << "Random access error at i = " << i << "\n";
             success = false;
-            break;
+            continue;
         }
     }
 
@@ -232,6 +243,16 @@ void testRegularSearch() {
     q.search(15);
 }
 
+void testTrailingSearch() {
+    QuickList<int> q;
+
+    for (int i = 0; i <= 300; i++)
+        q.append(i);
+
+    q.search(157);
+    q.search(145);
+}
+
 void runTests() {
     int testAmount = 4;
     int successfulTests = 1;
@@ -246,5 +267,5 @@ void runTests() {
 }
 
 int main() {
-    testRegularSearch();
+    runTests();
 }

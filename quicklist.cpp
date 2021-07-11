@@ -254,9 +254,41 @@ public:
         return index - jumpIndex > nextJumpIndex - index;
     }
 
+    typedef struct TrailingSearchNode {
+        Node<T>* node;
+        int indexOffset;
+    } TrailingSearchNode;
+
+    TrailingSearchNode bestTrailingPointer(int index) {
+        //0 is prevJPtr
+        //1 is trailingPtr
+        //2 is nextJPtr
+        int difference[3];
+        int prevJPtrIndex = getJumpIndex(index);
+        int nextJPtrIndex = prevJPtrIndex + distance;
+
+        difference[0] = index - prevJPtrIndex;
+        difference[1] = index - trailingPointer.index;
+        difference[2] = index - nextJPtrIndex;
+
+        TrailingSearchNode t;
+
+        if (abs(difference[0]) < abs(difference[1])) {
+            t.node = trailingPointer.jumpPointer->getData();
+            t.indexOffset = difference[0];
+        } else if (nextJPtrIndex < this->getMaxIndex() && abs(difference[2]) < abs(difference[1])) {
+            t.node = trailingPointer.jumpPointer->getNextNode()->getData();
+            t.indexOffset = difference[2];
+        } else {
+            t.node = trailingPointer.node;
+            t.indexOffset = difference[1];
+        }
+        return t;
+    }
+
     searchResult trailingSearch(int index) {
         searchResult r;
-        r.jumpPointer= trailingPointer.jumpPointer;
+        r.jumpPointer = trailingPointer.jumpPointer;
         r.node = trailingPointer.node;
 
         //Amount of steps that the JumpPointer has to jump
@@ -264,17 +296,17 @@ public:
 
         //If the JumpPointer is in range, do not modify the values given by the TrailingPointer
         if (jPtrOffset == 0) {
-            //By how many steps is the index off?
-            int indexOffset = index - trailingPointer.index;
+            TrailingSearchNode t = bestTrailingPointer(index);
 
             //Shift the node indexOffset times in the given direction
-            if (indexOffset > 0)
-                for (int i = 0; i < indexOffset; i++)
-                    r.node = r.node->getNextNode();
-            else if (index - trailingPointer.index < 0)
-                for (int i = 0; i > indexOffset; i--)
-                    r.node = r.node->getPrevNode();
+            if (t.indexOffset > 0)
+                for (int i = 0; i < t.indexOffset; i++)
+                    t.node = t.node->getNextNode();
+            else if (t.indexOffset < 0)
+                for (int i = 0; i > t.indexOffset; i--)
+                    t.node = t.node->getPrevNode();
 
+            r.node = t.node;
             setTrailingPointer(index, r.node, r.jumpPointer);
             return r;
 
@@ -310,33 +342,6 @@ public:
 
             return r;
         }
-    }
-
-    /**
-         * Is index 0? Then return the first node.
-         * Is index n - 1? Then return the last node.
-         * Is index to be searched regularly? Return a regular search result.
-         * Is index out of range? Then return nullptr as a result; TrailingPointer is not modified.
-         * @param index
-         * @return The search result and confirmation if a result has been found
-         */
-    searchCheck constantSearchCheck(int index) {
-        searchCheck check;
-        if (index == 0) {
-            check.r.node = this->getFirstNode();
-            check.r.jumpPointer= jumpList.getHead();
-            check.done = true;
-            setTrailingPointer(index, check.r.node, check.r.jumpPointer);
-        } else if (index == this->getMaxIndex()) {
-            check.r.node = this->getLastNode();
-            check.r.jumpPointer= jumpList.getLastNode();
-            check.done = true;
-            setTrailingPointer(index, check.r.node, check.r.jumpPointer);
-        } else if (index < 0 || index > this->getMaxIndex()) {
-            check.r.node = nullptr;
-            check.r.jumpPointer= nullptr;
-            check.done = true;
-        } return check;
     }
 
     searchResult nonTrailingSearch(int index) {
@@ -418,6 +423,33 @@ public:
     }
 
     /**
+     * Is index 0? Then return the first node.
+     * Is index n - 1? Then return the last node.
+     * Is index to be searched regularly? Return a regular search result.
+     * Is index out of range? Then return nullptr as a result; TrailingPointer is not modified.
+     * @param index
+     * @return The search result and confirmation if a result has been found
+     */
+    searchCheck constantSearchCheck(int index) {
+        searchCheck check;
+        if (index == 0) {
+            check.r.node = this->getFirstNode();
+            check.r.jumpPointer= jumpList.getHead();
+            check.done = true;
+            setTrailingPointer(index, check.r.node, check.r.jumpPointer);
+        } else if (index == this->getMaxIndex()) {
+            check.r.node = this->getLastNode();
+            check.r.jumpPointer= jumpList.getLastNode();
+            check.done = true;
+            setTrailingPointer(index, check.r.node, check.r.jumpPointer);
+        } else if (index < 0 || index > this->getMaxIndex()) {
+            check.r.node = nullptr;
+            check.r.jumpPointer= nullptr;
+            check.done = true;
+        } return check;
+    }
+
+    /**
      * May be referred to as 'QuickSearch', is the heart of the QuickList. Searches for the given index by using
      * the QuickList's JumpList and TrailingPointer to speed up the search.
      * @param index
@@ -425,7 +457,6 @@ public:
      */
     searchResult search(int index) {
         //Check if index is in range and if it should return first or last node instead
-        //Also check if a regular search procedure suffices
         searchCheck check = constantSearchCheck(index);
         if (check.done)
             return check.r;
