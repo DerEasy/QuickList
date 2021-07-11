@@ -6,9 +6,6 @@
 template <typename T>
 class JumpList : public BaseList<Node<T>*> {
 public:
-    JumpList() {
-
-    }
     /**
      * Has to be used in place of hasNext() to ensure that the tail of the JumpList will not be selected
      * @param jumpPointer

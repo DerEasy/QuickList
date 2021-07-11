@@ -189,31 +189,62 @@ bool testAdd() {
     return success;
 }
 
-void testPrepend() {
+bool testPrepend() {
     QuickList<int> q;
+    bool success = true;
+    std::cout << "\nTesting QuickList prepend function...\n";
 
     for (int i = 0; i < 300; ++i)
         q.append(i);
 
-
     for (int i = 0; i < 500; ++i)
         q.prepend(1000 + i);
 
-    q.debug_print();
-    q.jumpList.debug_print(30);
+    int index = 0;
+    Node<int>* node = q.getFirstNode();
+    for (int i = 1499; i >= 1000; --i, ++index, node = node->getNextNode()) {
+        if (node->getData() != i) {
+            std::cout << "Prepension error at index " << index << "\n";
+            success = false;
+        }
+    }
+    for (int i = 0; i < 300; ++i, ++index, node = node->getNextNode()) {
+        if (node->getData() != i) {
+            std::cout << "Prepension error at index " << index << "\n";
+            success = false;
+        }
+    }
+
+    if (success)
+        std::cout << "QuickList prepension test successful.\n";
+    else
+        std::cout << "QuickList prepension test failed.\n";
+    return success;
+}
+
+void testRegularSearch() {
+    QuickList<int> q;
+
+    for (int i = 0; i <= 300; i++)
+        q.append(i);
+
+    q.search(56);
+    q.search(15);
 }
 
 void runTests() {
-    int testAmount = 3;
+    int testAmount = 4;
     int successfulTests = 1;
 
+    //Performance test can't be failed
     testQuickSearchPerformance();
     if (testQuickSearchAccuracy()) ++successfulTests;
     if (testAdd()) ++successfulTests;
+    if (testPrepend()) ++successfulTests;
 
     std::cout << "\n" << successfulTests << " of " << testAmount << " tests successful.\n";
 }
 
 int main() {
-    testPrepend();
+    testRegularSearch();
 }
