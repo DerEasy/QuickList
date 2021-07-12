@@ -1,6 +1,7 @@
 #include "quicklist.cpp"
 #include "fstream"
 #include <chrono>
+#include <thread>
 
 void testAllSearchTypes() {
     QuickList<int> q;
